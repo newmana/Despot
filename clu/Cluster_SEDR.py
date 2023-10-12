@@ -1,16 +1,38 @@
-from SEDR.src.graph_func import graph_construction
-from SEDR.src.utils_func import adata_preprocess
-from SEDR.src.SEDR_train import SEDR_Train
 import torch
 import argparse
 from utils.common import *
-import pip
-import pip._internal
+from utils.check import Check_Requirements
+import pkg_resources
 import subprocess
 import sys
 
 
+def sedr_install():
+    # download SPROD handle python dependencies
+    if not os.path.isdir(os.path.join(os.getcwd(), "SEDR")):
+        print("Dependencies will be installed when Using SEDR for the first time.")
+        # handle python dependencies
+        py_req = Check_Requirements({"python-louvain", "scikit-learn", "bokeh", "matplotlib",
+                                     "torch-geometric", "torchvision",
+                                     "scikit-network", "imageio", "leidenalg", "umap-learn", "python-igraph"})
+
+        py_ins = os.system("git clone -b v0.1.0 https://github.com/JinmiaoChenLab/SEDR.git")
+        if py_ins+py_req == 0:
+            print("SEDR installation succeeded.")
+            return 0
+        else:
+            print("SEDR installation failed.")
+            exit(-1)
+    else:
+        print("SEDR has been installed correctly.")
+        return 0
+
+
 def sedr_run(adata, n_clusters=20):
+    from SEDR.src.graph_func import graph_construction
+    from SEDR.src.utils_func import adata_preprocess
+    from SEDR.src.SEDR_train import SEDR_Train
+
     def res_search_fixed_clus(adata, fixed_clus_count, increment=0.02):
         '''
             arg1(adata)[AnnData matrix]

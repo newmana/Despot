@@ -195,6 +195,8 @@ def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
         Save_smd_from_SpaGCN_clu(smdFile, adata, h5data)
         # adata = Differential_Expression_Analysis(adata)
     elif method == "SEDR":
+        from clu.Cluster_SEDR import sedr_install
+        sedr_install()
         from clu.Cluster_SEDR import sedr_run
         adata = Load_smd_to_AnnData(smdFile, h5data)
         adata = sedr_run(adata, n_clusters=20)
@@ -279,6 +281,8 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         # Using VAE for SPOTLight reference
         os.system("Rscript dcv/Deconv_SPOTlight_vae.R")
     elif method == 'StereoScope':
+        from dcv.stereoScope import stereoscope_install
+        stereoscope_install()
         from dcv.stereoScope import StereoScope_pp_VAE, StereoScope_run, StereoScope_pp_EasySample
         StereoScope_pp_VAE(smdFile, tempdir="h5ads", h5data=h5data, name=name, standard_size=standard_size)
         StereoScope_run(stereo_dir="h5ads/references/" + name, pythonPath=pythonPath, out_dir="h5ads/" + name + "_res")
@@ -287,7 +291,9 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope')
         os.remove(Wfile)
     elif method == 'StereoScope_es':
-        # stereoScope_na represents using easy sample in single-cell data
+        from dcv.stereoScope import stereoscope_install
+        stereoscope_install()
+        # stereoScope_es represents using easy sample in single-cell data
         from dcv.stereoScope import StereoScope_pp_VAE, StereoScope_run, StereoScope_pp_EasySample
         StereoScope_pp_EasySample(smdFile, h5data=h5data, standard_size=standard_size)
         StereoScope_run(stereo_dir="h5ads/references/" + name, pythonPath=pythonPath, out_dir="h5ads/" + name + "_res")
@@ -296,6 +302,8 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_es')
         os.remove(Wfile)
     elif method == 'StereoScope_na':
+        from dcv.stereoScope import stereoscope_install
+        stereoscope_install()
         # stereoScope_na represents no preprocessing in single-cell data
         from dcv.stereoScope import StereoScope_pp_na, StereoScope_run
         StereoScope_pp_na(smdFile, h5data=h5data)
@@ -348,12 +356,8 @@ def Despot_Deconv(smdFile, cfg=None, name='temp', force=False):
         else:
             print("Found scRNA_seq data in smdFile.")
     if do_scRNA_seq:
-        if cfg['TabulaType'] == '':
-            print("Using scRNA-seq provided by users...")
-            os.system("Rscript sc/Generate_scRNA-seq.R")
-        else:
-            print("Using Tabula Data...")
-            os.system("Rscript sc/Generate_TabulaData.R")
+        print("Using scRNA-seq provided by users...")
+        os.system("Rscript sc/Generate_scRNA-seq.R")
     # whether need Decontamination
     h5datas = Create_h5datas(cfg)
 

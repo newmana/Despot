@@ -1,5 +1,5 @@
 source("sptranr/R/_Loading.R")
-Check_Load_GithubPackages("SPOTlight", "https://github.com/MarcElosua/SPOTlight")
+Check_Load_GithubPackages("SPOTlight", "MarcElosua/SPOTlight")
 
 # Load SCE data
 Deconvolution_SPOTlight <- function(spe, sce){

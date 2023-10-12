@@ -6,7 +6,7 @@ Spot-based spatial resolved transcriptomic (SRT) technologies facilitate the elu
 
 ## Installation
 
-Despot is implemented by Python 3.9.7 and R 4.1.3 in Ubuntu 20.04. 
+Despot is implemented by Python 3.9.7 and R 4.1.3 (tested on Ubuntu 20.04, MacOS Catalina). 
 
 **For Python 3.9:**
 
@@ -17,6 +17,8 @@ conda create --name Despot python=3.9
 conda activate Despot
 pip install -r requirements.txt
 ```
+
+Time to install the requirements depends on the operating system, and it's about 30 minutes.
 
 **For R 4.1.3:**
 

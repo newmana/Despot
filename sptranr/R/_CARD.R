@@ -1,7 +1,9 @@
-library(CARD)
-library(MuSiC)
+source("sptranr/R/_Loading.R")
 source("sptranr/R/transpar.R")
 source("sptranr/R/_scRNA-seq.R")
+Check_Load_BiocPackages("TOAST")
+Check_Load_GithubPackages("MuSiC", "xuranw/MuSiC@7c58348")
+Check_Load_GithubPackages("CARD", "YingMa0107/CARD")
 
 # install TOAST, MuSiC
 

@@ -29,7 +29,7 @@ def Check_Requirements(required_packages):
         print("Missing requirements:{}".format(missing))
         python = sys.executable
         print("Installing missing requirements...")
-        subprocess.check_call([python, '-m', 'pip', 'install', *missing], stdout=subprocess.DEVNULL)
+        subprocess.check_call([python, '-m', 'pip', 'install', *missing])
         print("Missing requirements installed.")
         return 0
     else:
