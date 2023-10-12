@@ -1,6 +1,28 @@
 from utils.common import *
 from utils.io import *
 from utils.scdg import Make_References, Save_tsv_from_ref, Easy_Sample
+import pkg_resources
+from utils.check import Check_Requirements
+
+
+def stereoscope_install():
+    # download stereoscope handle python dependencies
+    if "stereoscope" not in {pkg.key for pkg in pkg_resources.working_set}:
+        print("Dependencies will be installed when Using stereoscope for the first time.")
+        # install stereoscope
+        download = os.system("git clone https://github.com/almaan/stereoscope \n"
+                  "{0} stereoscope/setup.py install --user".format(sys.executable))
+
+        if download == 0:
+            print("stereoscope installed successfully.")
+            return 0
+        else:
+            print("stereoscope installation failed.")
+            exit(-1)
+    else:
+        print("stereoscope has been installed correctly.")
+        return 0
+
 
 def Preprocess_hippo(pth, odir):
     ds = lp.connect(pth)
