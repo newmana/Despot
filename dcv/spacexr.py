@@ -25,5 +25,3 @@ def spacexr_pp_EasySample(smdFile, standard_size=25, add_filter=None):
     lbl.index = bytes2str(ref.index)
     lbl['annotation'] = bytes2str(lbl['annotation'])
     Save_smd_from_ref(smdFile, ref, lbl, name="sc-ref-es")
-
-import weka.classifiers

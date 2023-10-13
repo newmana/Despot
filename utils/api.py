@@ -56,7 +56,7 @@ def Pip_benchmark(smdFile, h5data):
     ARI = [metrics.adjusted_rand_score(clu[method], ground_truth) for method in clu.columns]
     benchmarks.loc['NMI'] = NMI
     benchmarks.loc['ARI'] = ARI
-    benchmarks.to_csv("h5ads/151673_" + h5data + ".csv", index=True, header=True)
+    benchmarks.to_csv("temps/151673_" + h5data + ".csv", index=True, header=True)
 
 
 def Create_h5datas(cfg):
@@ -232,7 +232,7 @@ def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
             Save_smd_from_Squidpy_clu(smdFile, adata, h5data)
 
 
-def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp', force=False, standard_size=10):
+def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", force=False, standard_size=10):
     method_list = ['CARD', 'Cell2Location', 'SPOTlight', 'SPOTlight_vae', 'SPOTlight_es', 'spacexr', 'spacexr_es',
                    'StereoScope', 'Seurat', 'Seurat_es', 'Giotto', 'StereoScope_es', 'StereoScope_na']
     pythonPath = cfg['pythonPath']
@@ -285,10 +285,10 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         from dcv.stereoScope import stereoscope_install
         stereoscope_install()
         from dcv.stereoScope import StereoScope_pp_VAE, StereoScope_run, StereoScope_pp_EasySample
-        StereoScope_pp_VAE(smdFile, tempdir="h5ads", h5data=h5data, name=name, standard_size=standard_size)
-        StereoScope_run(stereo_dir="h5ads/references/" + name, pythonPath=pythonPath, out_dir="h5ads/" + name + "_res")
-        Wfile = os.listdir("h5ads/" + name + "_res/spt_data")[0]
-        Wfile = "h5ads/" + name + "_res/spt_data/" + Wfile
+        StereoScope_pp_VAE(smdFile, tempdir="temps", h5data=h5data,  standard_size=standard_size)
+        StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
+        Wfile = os.listdir("temps/stsc_res/spt_data")[0]
+        Wfile = "temps/stsc_res/spt_data" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope')
         os.remove(Wfile)
     elif method == 'StereoScope_es':
@@ -297,9 +297,9 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         # stereoScope_es represents using easy sample in single-cell data
         from dcv.stereoScope import StereoScope_pp_VAE, StereoScope_run, StereoScope_pp_EasySample
         StereoScope_pp_EasySample(smdFile, h5data=h5data, standard_size=standard_size)
-        StereoScope_run(stereo_dir="h5ads/references/" + name, pythonPath=pythonPath, out_dir="h5ads/" + name + "_res")
-        Wfile = os.listdir("h5ads/" + name + "_res/spt_data")[0]
-        Wfile = "h5ads/" + name + "_res/spt_data/" + Wfile
+        StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
+        Wfile = os.listdir("temps/stsc_res/spt_data")[0]
+        Wfile = "temps/stsc_res/spt_data" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_es')
         os.remove(Wfile)
     elif method == 'StereoScope_na':
@@ -308,9 +308,9 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         # stereoScope_na represents no preprocessing in single-cell data
         from dcv.stereoScope import StereoScope_pp_na, StereoScope_run
         StereoScope_pp_na(smdFile, h5data=h5data)
-        StereoScope_run(stereo_dir="h5ads/references/" + name, pythonPath=pythonPath, out_dir="h5ads/" + name + "_res")
-        Wfile = os.listdir("h5ads/" + name + "_res/spt_data")[0]
-        Wfile = "h5ads/" + name + "_res/spt_data/" + Wfile
+        StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
+        Wfile = os.listdir("temps/stsc_res/spt_data")[0]
+        Wfile = "temps/stsc_res/spt_data" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_na')
         os.remove(Wfile)
     elif method == 'Cell2Location':
@@ -351,7 +351,7 @@ def Despot_Cluster(smdFile, cfg, force=False):
             Pip_cluster(smdFile, cfg, h5data, method=method, tif=tif, force=force)
 
 
-def Despot_Deconv(smdFile, cfg=None, name='temp', force=False):
+def Despot_Deconv(smdFile, cfg=None, force=False):
     sptinfo = smdInfo(smdFile)
     if cfg is None:
         cfg = sptinfo.configs
@@ -378,7 +378,7 @@ def Despot_Deconv(smdFile, cfg=None, name='temp', force=False):
                 continue
             print("Using {0} to do deconvolution in {1}.".format(method, h5data))
             start = time.time()
-            Pip_deconv(smdFile, cfg, h5data, method=method, name=name, force=force)
+            Pip_deconv(smdFile, cfg, h5data, method=method, force=force)
             end = time.time()
             print("method {0} using: {1}min.".format(method, (end - start) / 60), file=f)
     f.close()

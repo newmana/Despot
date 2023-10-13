@@ -280,33 +280,33 @@ def myPreprocess(loom_pth, out_dir, standard_size=50, label='Celltype_1',add_fil
                  )
     ds.close()
 
-def StereoScope_pp_na(smdFile, tempdir='h5ads', h5data='matrix', standard_size=25 ,add_filter=None, name="temp"):
+def StereoScope_pp_na(smdFile, tempdir='temps', h5data='matrix', standard_size=25 ,add_filter=None, name="stsc_temp"):
     # load spatial data
     spdata = Load_smd_to_AnnData(smdFile, h5data)
     # load scRNA-seq data
     scdata = Load_smd_sc_to_AnnData(smdFile)
-    out_dir = tempdir + "/references/" + name
+    out_dir = tempdir + "/" + name
     # save scRNA-seq data to tsv
     Save_tsv_from_scData(out_dir, scdata)
     # save ST data to tsv
     Save_tsv_from_spData(out_dir, spdata)
 
-def StereoScope_pp_EasySample(smdFile, tempdir='h5ads', h5data='matrix', standard_size=25 ,add_filter=None, name="temp"):
+def StereoScope_pp_EasySample(smdFile, tempdir='temps', h5data='matrix', standard_size=25 ,add_filter=None, name="stsc_temp"):
     # load spatial data
     spdata = Load_smd_to_AnnData(smdFile, h5data)
     # load scRNA-seq data
     scdata = Load_smd_sc_to_AnnData(smdFile)
     scdata0 = Easy_Sample(scdata, standard_size, add_filter)
-    out_dir = tempdir + "/references/" + name
+    out_dir = tempdir + "/" + name
     # save scRNA-seq data to tsv
     Save_tsv_from_scData(out_dir, scdata0)
     # save ST data to tsv
     Save_tsv_from_spData(out_dir, spdata)
 
-def StereoScope_pp_VAE(smdFile, tempdir='h5ads', h5data='matrix', standard_size=25, add_filter=None, name="temp"):
+def StereoScope_pp_VAE(smdFile, tempdir='temps', h5data='matrix', standard_size=25, add_filter=None, name="stsc_temp"):
     # load spatial data
     spdata = Load_smd_to_AnnData(smdFile, h5data)
-    out_dir = tempdir + "/references/" + name
+    out_dir = tempdir + "/" + name
     Save_tsv_from_spData(out_dir, spdata)
 
     # load scRNA-seq data
@@ -316,7 +316,7 @@ def StereoScope_pp_VAE(smdFile, tempdir='h5ads', h5data='matrix', standard_size=
 
 
 def StereoScope_cmd(sc_cnt, sc_labels, st_cnt,
-                    sce=75000, ste=75000, out='h5ads/res', num=5000,
+                    sce=75000, ste=75000, out='temps/stsc_res', num=5000,
                     gpu=True, scb=100, stb=100):
     cmd = "stereoscope run --sc_cnt " + sc_cnt + \
               " --sc_labels " + sc_labels + \
@@ -330,7 +330,8 @@ def StereoScope_cmd(sc_cnt, sc_labels, st_cnt,
               " --gpu "
     return cmd
 
-def StereoScope_run(stereo_dir, pythonPath, out_dir='h5ads/res',
+
+def StereoScope_run(stereo_dir, pythonPath, out_dir='temps/stsc_res',
                     scdata_epoch=5000, stdata_epoch=5000,
                     scdata_batch=100, stdata_batch=100,
                     num=3000, gpu=True):
