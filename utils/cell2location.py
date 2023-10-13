@@ -6,11 +6,12 @@ import cell2location
 from matplotlib import rcParams
 rcParams['pdf.fonttype'] = 42 # enables correct plotting of text
 
-results_folder = './h5ads/lymph_nodes_analysis/'
+results_folder = './temp'
 
 # create paths and names to results folders for reference regression and cell2location models
 ref_run_name = f'{results_folder}/reference_signatures'
 run_name = f'{results_folder}/cell2location_map'
+
 
 def Cell2Location_pp_sc(smdFile, cell_count_cutoff=5, cell_percentage_cutoff2=0.03, nonz_mean_cutoff=1.12):
     adata_sc = Load_smd_sc_to_AnnData(smdFile)

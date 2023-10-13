@@ -5,7 +5,6 @@ source("sptranr/R/_scRNA-seq.R")
 # decoding params
 params <- fromJSON(file = "params.json")
 smdFile <- params$smdFile
-smdFile <- params$sptFile
 imgdir <- paste0(params$dataPath, "/spatial")
 platform <- params$platform
 if(is.null(platform)){

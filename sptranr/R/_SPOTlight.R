@@ -1,14 +1,14 @@
 source("sptranr/R/_Loading.R")
 Check_Load_GithubPackages("SPOTlight", "MarcElosua/SPOTlight")
+# Check_Load_InstallPackages("DropletUtils")
 
 # Load SCE data
 Deconvolution_SPOTlight <- function(spe, sce){
 
   res <- SPOTlight(
-    x = sce,
-    y = spe,
-    assay = "counts",
-    groups = sce$free_annotation,
+    x = counts(sce),
+    y = counts(spe),
+    groups = as.character(sce$free_annotation),
     hvg = sce@metadata$HVGs,
     mgs = sce@metadata$marker_genes,
     weight_id = "mean.AUC",

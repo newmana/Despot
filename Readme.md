@@ -26,7 +26,7 @@ Run this code in R Console for Despot basic requirements
 
 ```R
 install.packages(c("BiocManager", "Matrix","stringr"))
-BiocManager::install(c("rhdf5", "png", "rjson","data.table","SingleCellExperiment", "optparse", "distances", "gtools", "umap", "dplyr", "mvtnorm", "qvalue", "ComplexHeatmap"))
+BiocManager::install(c("rhdf5", "png", "rjson","data.table","SingleCellExperiment", "optparse", "distances", "gtools", "umap", "dplyr", "mvtnorm", "qvalue", "ComplexHeatmap", "tidyverse"))
 ```
 
 ## Usage

@@ -1,8 +1,3 @@
-# Title     : Using SPOTlight for Deconvolution
-# Objective : Pip
-# Created by: rzh
-# Created on: 2022/3/18
-
 source("sptranr/R/transpar.R")
 source("sptranr/R/_SPOTlight.R")
 source("sptranr/R/_scRNA-seq.R")

@@ -654,10 +654,21 @@ Load_smd_to_Giotto <- function(smdFile, h5data = 'matrix',
   return(gobj)
 }
 
+Check_Load_BiocPackages <- function(pkgName){
+  if(!require(pkgName, character.only = TRUE)){
+    if(!requireNamespace("BiocManager", quietly = TRUE))
+      install.packages("BiocManager")
+    library("BiocManager")
+    BiocManager::install(pkgName, update=FALSE)
+    library(pkgName, character.only = TRUE)
+  }
+}
+
 # smd to SpatialExperiment object
 Load_smd_to_SE <- function(smdFile, h5data = 'matrix', platform="10X_Visium"){
-
-  library(SpatialExperiment)
+  Check_Load_BiocPackages("DropletUtils")
+  Check_Load_BiocPackages("SpatialExperiment")
+  
   # find if need to do subset
   datas <- strsplit(h5data, '/')[[1]]
   data0 <- datas[1]

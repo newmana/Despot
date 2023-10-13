@@ -1,16 +1,42 @@
 from utils.common import *
 from utils.io import *
 import matplotlib as mpl
+import pkg_resources
+from utils.check import Check_Requirements
+import subprocess
 import cell2location
 
 from matplotlib import rcParams
 rcParams['pdf.fonttype'] = 42 # enables correct plotting of text
 
-results_folder = './h5ads/lymph_nodes_analysis/'
+results_folder = './temp'
 
 # create paths and names to results folders for reference regression and cell2location models
 ref_run_name = f'{results_folder}/reference_signatures'
 run_name = f'{results_folder}/cell2location_map'
+
+
+def cell2location_install():
+    # download cell2location and handle python dependencies
+    if "cell2location" not in {pkg.key for pkg in pkg_resources.working_set}:
+        print("Dependencies will be installed when Using cell2location for the first time.")
+
+        # handle python dependencies
+        py_req = Check_Requirements({"pyro-ppl", "scvi-tools", "black", "flake8", "pytest", "pytest-cov",
+                                     "isort", "pre-commit", "jinja2", "leidenalg"})
+
+        python = sys.executable
+        py_ins = subprocess.check_call([python, '-m', 'pip', 'install', "cell2location"], stdout=subprocess.DEVNULL)
+
+        if py_req + py_ins == 0:
+            print("cell2location installed successfully.")
+            return 0
+        else:
+            print("cell2location installation failed.")
+            exit(-1)
+    else:
+        print("cell2location has been installed correctly.")
+        return 0
 
 def Cell2Location_pp_sc(smdFile, cell_count_cutoff=5, cell_percentage_cutoff2=0.03, nonz_mean_cutoff=1.12):
     adata_sc = Load_smd_sc_to_AnnData(smdFile)
@@ -30,7 +56,7 @@ def Cell2Location_pp_sc(smdFile, cell_count_cutoff=5, cell_percentage_cutoff2=0.
 
 
 def Cell2Location_rg_sc(adata_sc, max_epoches=250, batch_size=2500, train_size=1, lr=0.002,
-                        num_samples=1000, use_gpu=False):
+                        num_samples=1000, use_gpu=True):
     from cell2location.models import RegressionModel
 
     # prepare anndata for the regression model
@@ -125,7 +151,6 @@ def Cell2Location_rg_sp(adata_sp, inf_aver, N_cells_per_location=30, detection_a
     # to adata.obs with nice names for plotting
     adata_sp.obs[adata_sp.uns['mod']['factor_names']] = adata_sp.obsm['q05_cell_abundance_w_sf']
     return adata_sp
-
 
 
 def Cell2Location_run(smdFile, h5data, sc_max_epoches=250, sc_batch_size=2500, sc_train_size=1, sc_lr=0.002, sc_num_samples=1000,

@@ -59,7 +59,7 @@ if __name__ == "__main__":
             print("platform:{0}".format(platform))
             print("Using hires img: {0}".format(hires))
             print("=========Despot Start===========")
-            SMD_init(smdFile=smdFile, force=True)
+            SMD_init(smdFile=smdFile)
             Despot_Decont(smdFile, cfg)
             Despot_Cluster(smdFile, cfg)
             Despot_Deconv(smdFile, cfg)

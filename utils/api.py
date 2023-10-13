@@ -1,3 +1,4 @@
+import subprocess
 import time
 from utils.io import *
 from utils.preprocess import *
@@ -313,16 +314,22 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", name='temp',
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_na')
         os.remove(Wfile)
     elif method == 'Cell2Location':
+        from dcv.cell2location import cell2location_install
+        cell2location_install()
         from dcv.cell2location import Cell2Location_run
-        try:
-            adata = Cell2Location_run(smdFile, h5data)
-            Save_smd_from_Cell2Location(smdFile, adata, h5data)
-        except:
-            print("The distribution of data may not suitable for Cell2Location.")
+        # try:
+        adata = Cell2Location_run(smdFile, h5data)
+        Save_smd_from_Cell2Location(smdFile, adata, h5data)
+        # except:
+        #     print("The distribution of data may not suitable for Cell2Location.")
     elif method == 'Seurat':
-        os.system("Rscript dcv/Deconv_Seurat.R")
+        state = subprocess.call(["Rscript", "dcv/Deconv_Seurat.R"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if state == 0:
+            print("Deconvolution using Seurat finished.")
     elif method == 'Giotto':
-        os.system("Rscript dcv/Deconv_Giotto.R")
+        state = subprocess.check_call(["Rscript", "dcv/Deconv_Giotto.R"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if state == 0:
+            print("Deconvolution using Giotto finished.")
 
 
 def Despot_Decont(smdFile, cfg, force=False):

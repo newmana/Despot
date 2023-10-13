@@ -39,7 +39,7 @@ FindMarkers_Seurat <- function(seu, ident){
 Save_smd_from_Seurat.dcv <- function(smdFile, h5data, predictions.assay){
 
   results <- Matrix(t(predictions.assay@data[-dim(predictions.assay@data)[1],]))
-  results <- as(results, "dgeMatrix")
+  results <- as(results, "unpackedMatrix")
   cell_type_names <- rownames(predictions.assay)
   h5createGroup(smdFile, paste0(h5data, '/deconv/Seurat'))
 
