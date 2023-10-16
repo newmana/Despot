@@ -459,7 +459,7 @@ def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_typ
 
 
 # 3D landscape for SCSPs
-def Show_3D_landscape(smdFile, folder=None, cell_types=None, sf=None, pipline=None,imgPath=None, alpha=0.1):
+def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=0.1):
     from mpl_toolkits.mplot3d import Axes3D
     from vsl.boundary import boundary_extract, show_edge
     from PIL import Image
@@ -629,6 +629,23 @@ def Show_3D_landscape(smdFile, folder=None, cell_types=None, sf=None, pipline=No
                handlelength=0.7,
                fontsize=14)
     fig.savefig(figname, dpi=400)
+    return spot3Ds
+
+
+def spot3D_to_json(spot3Ds, filename):
+    from vsl.palette import Set_palette
+    palette, umap = Set_palette(len(spot3Ds))
+    scatters = pd.DataFrame()
+    for i, ct in enumerate(spot3Ds):
+        spot3D = spot3Ds[ct].copy()
+        spot3D['color'] = palette[i]
+        spot3D['cell_type'] = ct
+        spot3D.index = spot3D.index + '-' + ct
+        scatters = pd.concat([scatters, spot3D])
+    json_str = scatters.to_json(orient="columns")
+    json_obj = json.loads(json_str)
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(json_obj, f, indent=4, ensure_ascii=False)
 
 
 def Show_best_group(smdFile, cell_type, fscore, domain, mtd_chain: str, figname=None, save=True):
@@ -1030,7 +1047,6 @@ def annotate_heatmap(im, data=None, valfmt="{x:.2f}",
             kw.update(color=textcolors[int(data[i, j] < threshold)])
             text = im.axes.text(j, i, valfmt(data[i, j], None), **kw)
             texts.append(text)
-
     return texts
 
 
