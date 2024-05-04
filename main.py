@@ -1,14 +1,14 @@
+from utils.check import *
+print("Importing requirements...")
+Check_Environments()
+Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch"})
 import json
 import shutil
 from utils.io import *
-from utils.api import Create_h5datas, Despot_Decont, Despot_Cluster, Despot_Deconv
+from utils.api import Create_h5datas, Despot_Decont, Despot_Cluster, Despot_Deconv, Despot_Ensemble
 from utils.geo import Despot_Find_bestGroup, Despot_group_correlation,\
     Show_self_correlation, Show_bash_best_group, Gen_venn
-from utils.check import *
-print("Importing requirements...")
 
-Check_Environments()
-Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch"})
 
 def SMD_init(smdFile: str, force: bool = False):
     # whether the file exists
@@ -63,15 +63,5 @@ if __name__ == "__main__":
             Despot_Decont(smdFile, cfg)
             Despot_Cluster(smdFile, cfg)
             Despot_Deconv(smdFile, cfg)
+            Despot_Ensemble(smdFile)
             print("=========Despot Finish==========")
-# # Best_dict, Groups = Despot_Find_bestGroup(sptFile, greedy=3)
-# folder = "FFPE_Mouse_K"
-# comp, corr, p_val = Despot_group_correlation(sptFile, Best_dict, alpha=1)
-# Show_self_correlation(corr, folder)
-# Show_bash_best_group(sptFile, Best_dict=None, folder=folder)
-# inter_genes = Gen_venn(sptFile, folder, Best_dict=None, show_genes=1, cell_filter=None)
-
-# Despot_Benchmark(sptFile, cfg, mode="cluster", force=False)
-# Pip_cluVisual(sptFile, h5data, imgPath="151673_none_cluster.pdf")
-# Cluster_Visualization(adata, type="spatial")
-# sc.pl.spatial(adata, img_key="lowres", color="ground_truth", size=1.5)

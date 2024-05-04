@@ -82,113 +82,121 @@ dev.off()
 # sce <- as(seu0, "SingleCellExperiment")
 # Save_Seurat_to_tsv("data/human_breast_cancer_atlas/GSE176078_RAW/GSM5354531_CID44971", seu0)
 sptFile <- "h5ads/V1_Adult_Mouse_Brain.h5spt"
-seu <- Load_sptsc_to_Seurat(sptFile)
-seu@active.ident <- as.factor(seu$orig.ident)
-seu <- SCTransform(seu, verbose = F)
-seu <- FindVariableFeatures(seu, nfeatures = 10000)
-seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
-dims <- 6
-seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
-seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
-UMAPPlot(seu)
-markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
-top20 <- c()
-for(i in unique(seu@active.ident)){
-  marker <- markers[which(markers$cluster == i), "gene"]
-  top20 <- cbind(top20,head(marker, 9))
+h5datas <- c('scRNA_seq', 'sc-ref', 'sc-ref-es')
+for (h5data in h5datas){
+  seu <- Load_smdsc_to_Seurat(sptFile, h5data)
+  seu@active.ident <- as.factor(seu$orig.ident)
+  seu <- SCTransform(seu, verbose = F)
+  seu <- FindVariableFeatures(seu, nfeatures = 10000)
+  seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
+  dims <- 6
+  seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
+  seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
+  UMAPPlot(seu)
+  markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
+  top20 <- c()
+  for(i in unique(seu@active.ident)){
+    marker <- markers[which(markers$cluster == i), "gene"]
+    top20 <- cbind(top20,head(marker, 9))
+  }
+  top20 <- as.character(top20)
+  plot(DoHeatmap(seu, top20) + NoLegend())
+  dots1 = c('AQP4', 'LCAT', 'MLC1', 'ACSBG1','HOPX',
+            'ESAM','TM4SF1','FLT1','ELTD1','PECAM1',
+            'NAP1L5','GAD1', 'GAD2',  'SLC32A1', 'ARX',
+            'C1QA', 'C1QB', 'C1QC', 'TYROBP','PF4',
+            'MBP', 'MOBP','MOG','APOD',  'PLP1',
+            'HPCA', 'GRIA1', 'CPNE6', 'TSPAN13','WIPF3',
+            'MEF2C', 'PCSK2', 'NECAB3', 'TBR1', 'DPP10')
+  svg(paste0("figures/heatmap_brain_", h5data, ".svg"), width = 10, height = 4.5)
+  plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
+         ggtitle("molecular markers of Zeisel's profiles") +
+         theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
+               plot.title = element_text(hjust=0.5,face = 'plain')))
+  dev.off()
 }
-top20 <- as.character(top20)
-plot(DoHeatmap(seu, top20) + NoLegend())
-dots1 = c('AQP4', 'LCAT', 'MLC1', 'ACSBG1','HOPX',
-          'ESAM','TM4SF1','FLT1','ELTD1','PECAM1',
-          'NAP1L5','GAD1', 'GAD2',  'SLC32A1', 'ARX',
-          'C1QA', 'C1QB', 'C1QC', 'TYROBP','PF4',
-          'MBP', 'MOBP','MOG','APOD',  'PLP1',
-          'HPCA', 'GRIA1', 'CPNE6', 'TSPAN13','WIPF3',
-          'MEF2C', 'PCSK2', 'NECAB3', 'TBR1', 'DPP10')
-svg(paste0("figures/heatmap_brain.svg"), width = 10, height = 4.5)
-plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
-       ggtitle("molecular markers of Zeisel's profiles") +
-       theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
-             plot.title = element_text(hjust=0.5,face = 'plain')))
-dev.off()
+
 
 
 sptFile <- "h5ads/FFPE_Mouse_Kidney_DropSeq.h5spt"
-seu <- Load_sptsc_to_Seurat(sptFile)
-seu@active.ident <- as.factor(seu$orig.ident)
-seu <- SCTransform(seu, verbose = F)
-seu <- FindVariableFeatures(seu, nfeatures = 10000)
-seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
-dims <- 6
-seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
-seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
-UMAPPlot(seu)
-markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
-top20 <- c()
-for(i in unique(seu@active.ident)){
-  marker <- markers[which(markers$cluster == i), "gene"]
-  top20 <- cbind(top20,head(marker, 6))
-}
-top20 <- as.character(top20)
-plot(DoHeatmap(seu, top20) + NoLegend())
+for (h5data in h5datas){
+  seu <- Load_smdsc_to_Seurat(sptFile, h5data)
+  seu@active.ident <- as.factor(seu$orig.ident)
+  seu <- SCTransform(seu, verbose = F)
+  seu <- FindVariableFeatures(seu, nfeatures = 10000)
+  seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
+  dims <- 6
+  seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
+  seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
+  UMAPPlot(seu)
+  markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
+  top20 <- c()
+  for(i in unique(seu@active.ident)){
+    marker <- markers[which(markers$cluster == i), "gene"]
+    top20 <- cbind(top20,head(marker, 6))
+  }
+  top20 <- as.character(top20)
+  plot(DoHeatmap(seu, top20) + NoLegend())
 
-dots1 = c('AQP2', 'SLC8A1', 'SLC16A7','SLC12A1', 'EPHA7', 'SLC5A12', 'SLC7A13')
-# dots1 = c('AQP4', 'LCAT', 'MLC1', 'ACSBG1','HOPX',
-#           'ESAM','TM4SF1','FLT1','ELTD1','PECAM1',
-#           'NAP1L5','GAD1', 'GAD2',  'SLC32A1', 'ARX',
-#           'C1QA', 'C1QB', 'C1QC', 'TYROBP','PF4',
-#           'MBP', 'MOBP','MOG','APOD',  'PLP1',
-#           'HPCA', 'GRIA1', 'CPNE6', 'TSPAN13','WIPF3',
-#           'MEF2C', 'PCSK2', 'NECAB3', 'TBR1', 'DPP10')
-svg(paste0("figures/heatmap_kidney_sc.svg"), width = 6, height = 4)
-seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
-plot(DotPlot(seu0, features=dots1, cols=c('lightgrey', '#800000')) +
-       ggtitle("molecular markers of single-cell profiles") +
-       theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
-             plot.title = element_text(hjust=0.5,face = 'plain')))
-dev.off()
+  dots1 = c('AQP2', 'SLC8A1', 'SLC16A7','SLC12A1', 'EPHA7', 'SLC5A12', 'SLC7A13')
+  # dots1 = c('AQP4', 'LCAT', 'MLC1', 'ACSBG1','HOPX',
+  #           'ESAM','TM4SF1','FLT1','ELTD1','PECAM1',
+  #           'NAP1L5','GAD1', 'GAD2',  'SLC32A1', 'ARX',
+  #           'C1QA', 'C1QB', 'C1QC', 'TYROBP','PF4',
+  #           'MBP', 'MOBP','MOG','APOD',  'PLP1',
+  #           'HPCA', 'GRIA1', 'CPNE6', 'TSPAN13','WIPF3',
+  #           'MEF2C', 'PCSK2', 'NECAB3', 'TBR1', 'DPP10')
+  svg(paste0("figures/heatmap_kidney_sn_", h5data, ".svg"), width = 6, height = 4)
+  seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
+  plot(DotPlot(seu0, features=dots1, cols=c('lightgrey', '#800000')) +
+         ggtitle("molecular markers of single-cell profiles") +
+         theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
+               plot.title = element_text(hjust=0.5,face = 'plain')))
+  dev.off()
+}
 
 
 sptFile <- "h5ads/FFPE_Mouse_Kidney_sNucSeq.h5spt"
-seu <- Load_sptsc_to_Seurat(sptFile)
-seu@active.ident <- as.factor(seu$orig.ident)
-seu <- SCTransform(seu, verbose = F)
-seu <- FindVariableFeatures(seu, nfeatures = 10000)
-seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
-dims <- 6
-seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
-seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
-UMAPPlot(seu)
-markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
-top20 <- c()
-for(i in unique(seu@active.ident)){
-  marker <- markers[which(markers$cluster == i), "gene"]
-  top20 <- cbind(top20,head(marker, 6))
-}
-top20 <- as.character(top20)
-plot(DoHeatmap(seu, top20) + NoLegend())
+for (h5data in h5datas){
+  seu <- Load_smdsc_to_Seurat(sptFile, h5data)
+  seu@active.ident <- as.factor(seu$orig.ident)
+  seu <- SCTransform(seu, verbose = F)
+  seu <- FindVariableFeatures(seu, nfeatures = 10000)
+  seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
+  dims <- 6
+  seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
+  seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
+  UMAPPlot(seu)
+  markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
+  top20 <- c()
+  for(i in unique(seu@active.ident)){
+    marker <- markers[which(markers$cluster == i), "gene"]
+    top20 <- cbind(top20,head(marker, 6))
+  }
+  top20 <- as.character(top20)
+  plot(DoHeatmap(seu, top20) + NoLegend())
 
-dots1 = c('AQP2','MGAT4C','FXYD4',
-          'SLC8A1','SCNN1B','SCNN1G',
-          'SLC12A3','TRPM6','SLC16A7',
-          'EMCN','FLT1', 'ADGRL4',
-          'KIT','CLNK', 'AQP6',
-          'SLC26A4', 'ATP6V1C2', 'LSAMP',
-          'SLC12A1', 'ERBB4','EGF',
-          'NCAM1','SORCS3','EPHA7',
-          'CFH','FHL2',  'AK5',
-          'PTPRC','MYO1F','LST1',
-          'THSD7A','NPHS1','PTPRO',
-          'SLC34A1','NOX4','SLC5A12',
-          'GHR','SLCO1A6','SLC7A13')
-svg(paste0("figures/heatmap_kidney_sn.svg"), width = 10, height = 6)
-# seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
-plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
-       ggtitle("molecular markers of single-nucleus profiles") +
-       theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
-             plot.title = element_text(hjust=0.5,face = 'plain')))
-dev.off()
+  dots1 = c('AQP2','MGAT4C','FXYD4',
+            'SLC8A1','SCNN1B','SLC2A9',
+            'SLC12A3','TRPM6','SLC16A7',
+            'EMCN','FLT1', 'ADGRL4',
+            'KIT','CLNK', 'AQP6',
+            'SLC26A4', 'ATP6V1C2', 'LSAMP',
+            'SLC12A1', 'ERBB4','UMOD',
+            'NCAM1','SORCS3','EPHA7',
+            'CHN2','TBC1D4','CFH','FHL2',  'AK5',
+            'PTPRC','MYO1F','CD74',
+            'THSD7A','NPHS1','PTPRO',
+            'SLC34A1','NOX4','SLC5A12',
+            'GHR','SLCO1A6','SLC7A13')
+  svg(paste0("figures/heatmap_kidney_sn_", h5data, ".svg"), width = 10, height = 6)
+  # seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
+  plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
+         ggtitle("molecular markers of single-nucleus profiles") +
+         theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
+               plot.title = element_text(hjust=0.5,face = 'plain')))
+  dev.off()
+}
 
 
 sptFile <- "h5ads/PDAC-A.h5spt"
@@ -264,37 +272,39 @@ plot(DotPlot(seu0, features=dots1, cols=c('lightgrey', '#800000')) +
 dev.off()
 
 sptFile <- "h5ads/CID4971.h5spt"
-seu <- Load_sptsc_to_Seurat(sptFile)
-seu@active.ident <- as.factor(seu$orig.ident)
-seu <- SCTransform(seu, verbose = F)
-seu <- FindVariableFeatures(seu, nfeatures = 10000)
-seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
-dims <- 6
-seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
-seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
-UMAPPlot(seu)
-markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
-top20 <- c()
-for(i in unique(seu@active.ident)){
-  marker <- markers[which(markers$cluster == i), "gene"]
-  top20 <- cbind(top20,head(marker, 10))
+for (h5data in h5datas){
+  seu <- Load_smdsc_to_Seurat(sptFile, h5data)
+  seu@active.ident <- as.factor(seu$orig.ident)
+  seu <- SCTransform(seu, verbose = F)
+  seu <- FindVariableFeatures(seu, nfeatures = 10000)
+  seu <- RunPCA(seu, assay = "SCT", features = VariableFeatures(seu))
+  dims <- 6
+  seu <- FindNeighbors(seu, reduction = "pca", dims = 1:dims, features = VariableFeatures(seu))
+  seu <- RunUMAP(seu, reduction = "pca", dims = 1:dims)
+  UMAPPlot(seu)
+  markers <- FindAllMarkers(seu,only.pos = T, features = VariableFeatures(seu))
+  top20 <- c()
+  for(i in unique(seu@active.ident)){
+    marker <- markers[which(markers$cluster == i), "gene"]
+    top20 <- cbind(top20,head(marker, 10))
+  }
+  top20 <- as.character(top20)
+  plot(DoHeatmap(seu, top20) + NoLegend())
+  dots1 = c("MS4A1","CD79A","NCF1","CD79B","CD19",
+            "APOD", "DCN", "LUM","COL1A1","CTGF",
+            "MGST1","MARCKSL1", "CD24", "UCHL1","STMN1",
+            "RNASE1","PLVAP",'PECAM1',"RBP7" ,"FABP4",
+            'CST3',"TYROBP",'C1QA','C1QB','C1QC',
+            "AZGP1","CXCL2","LTF","EPCAM","SCGB3A1",
+            "JCHAIN","IGLL5","IGHG4","IGHG3","IGHG2",
+            "NDUFA4L2","RGS5","ACTA2","GJA4","HIGD1B",
+            "IL32", "CD3E","CD7","CCL5","NKG7"
+  )
+  svg(paste0("figures/heatmap_CID4971_", h5data, ".svg"), width = 10.5, height = 5)
+  # seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
+  plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
+         ggtitle("molecular markers of CID4971 single-cell profiles") +
+         theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
+               plot.title = element_text(hjust=0.5,face = 'plain')))
+  dev.off()
 }
-top20 <- as.character(top20)
-plot(DoHeatmap(seu, top20) + NoLegend())
-dots1 = c("MS4A1","CD79A","NCF1","CD79B","CD19",
-          "APOD", "DCN", "LUM","COL1A1","CTGF",
-          "MGST1","MARCKSL1", "CD24", "UCHL1","STMN1",
-          "RNASE1","PLVAP",'PECAM1',"RBP7" ,"FABP4",
-          'CST3',"TYROBP",'C1QA','C1QB','C1QC',
-          "AZGP1","CXCL2","LTF","EPCAM","SCGB3A1",
-          "JCHAIN","IGLL5","IGHG4","IGHG3","IGHG2",
-          "NDUFA4L2","RGS5","ACTA2","GJA4","HIGD1B",
-          "IL32", "CD3E","CD7","CCL5","NKG7"
-)
-svg(paste0("figures/heatmap_CID4971.svg"), width = 10.5, height = 5)
-# seu0 <- seu[, which(seu$orig.ident %in% c('CD-PC', 'CNT', 'DCT', 'LH(AL)', 'LH(DL)', 'PT(S1-S2)', 'PT(S3)'))]
-plot(DotPlot(seu, features=dots1, cols=c('lightgrey', '#800000')) +
-       ggtitle("molecular markers of CID4971 single-cell profiles") +
-       theme(axis.text.x = element_text(angle = 90, hjust=1, vjust=0.5),
-             plot.title = element_text(hjust=0.5,face = 'plain')))
-dev.off()

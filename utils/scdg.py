@@ -47,7 +47,6 @@ def Make_References(smdFile, count_size=3000,
                     h_dim=400, z_dim=20,
                     num_epochs=1000, learning_rate=1e-3,
                     epoch_thresh=1e-5, ref_size=25, use_genes=None):
-    # 设备配置
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(device)
     scdata = Load_smd_sc_to_AnnData(smdFile)
@@ -61,10 +60,11 @@ def Make_References(smdFile, count_size=3000,
     scdataset = np.asarray(scdataset)
     uni_types = np.unique(scdata.obs['annotation'])
     scaler = MinMaxScaler()
-    scdataset = scaler.fit_transform(scdataset)  # 注意，这里的values是array
+    scdataset = scaler.fit_transform(scdataset)
 
     reference = pd.DataFrame(columns=scdata.var_names, dtype='float32')
     label = pd.DataFrame(columns=["annotation"], dtype='str')
+    models = []
     for type in uni_types:
         zidx = np.where(scdata.obs['annotation'] == type)[0]
         nz = zidx.shape[0]
@@ -72,31 +72,26 @@ def Make_References(smdFile, count_size=3000,
         if nz < ref_size:
             print(f"{type} | was discarded due to insufficient number of cells")
             continue
-        # 实例化一个模型
         model = VAE(count_size=count_size, h_dim=h_dim, z_dim=z_dim).to(device)
 
-        # 创建优化器
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         print("Calculate examples for {0}".format(type))
         zidx = np.where(scdata.obs['annotation'] == type)[0]
         dataset = scdataset[zidx, :]
         dataset = torch.from_numpy(np.array(dataset))
         batch_size = len(dataset)
-        # 数据加载器
         data_loader = Data.DataLoader(dataset=dataset,
                                       batch_size=batch_size,
                                       shuffle=True)
         for epoch in range(num_epochs):
             kl_divs = []
             for i, x in enumerate(data_loader):
-                # 获取样本，并前向传播
                 x = x.to(device).view(-1, count_size)
                 x_reconst, mu, log_var = model(x)
 
                 reconst_loss = F.binary_cross_entropy(x_reconst, x, reduction='mean')
                 kl_div = - 0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
 
-                # 反向传播和优化
                 loss = reconst_loss + kl_div
                 optimizer.zero_grad()
                 loss.backward()
@@ -109,13 +104,12 @@ def Make_References(smdFile, count_size=3000,
             if sum(kl_divs) < epoch_thresh:
                 break
         print("Epoch has reach an end.")
+        models.append(model)
         with torch.no_grad():
-            # 重构的图像
             out, _, _ = model(x)
             npout = out.cpu().numpy()
             oidx = np.random.choice(np.arange(npout.shape[0]), size=ref_size, replace=False)
             ref = pd.DataFrame(npout[oidx, :], columns=scdata.var_names)
-            # 保存参考数据集和annotation
             reference = pd.concat([reference, ref], ignore_index=True)
             types = pd.DataFrame(np.repeat(type, ref_size), columns=['annotation'])
             label = pd.concat([label, types], ignore_index=True)

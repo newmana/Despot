@@ -2,6 +2,7 @@ import subprocess
 import time
 from utils.io import *
 from utils.preprocess import *
+from utils.geo import Despot_Find_bestGroup
 
 
 def Pip_cluVisual(smdFile, h5data, imgPath):
@@ -393,3 +394,7 @@ def Despot_SubsetDeconv(smdFile, h5data="matrix", clu_mtd=None, domain=None):
     Save_smd_from_Subset(smdFile, h5data=h5data, subset_name=clu_mtd + "_" + str(domain), refer_idx=idx, force=False)
     Save_smd_from_configs(smdFile, {"Decontamination": subset_name})
     Despot_Deconv(smdFile)
+
+
+def Despot_Ensemble(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None):
+    Despot_Find_bestGroup(smdFile, beta, greedy, spmat_subset, clu_subset, dcv_subset)

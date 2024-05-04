@@ -326,6 +326,40 @@ Load_10Xsc_to_SCE <- function(tenXdir){
   return(sce)
 }
 
+# Load 10X scRNA-seq data to Seurat
+Load_10Xsc_to_Seurat <- function(tenXdir, filterWhenCreating = TRUE){
+  library(Seurat)
+  library(stringr)
+  if (filterWhenCreating){
+    x <- Read10X(tenXdir) %>%
+      CreateSeuratObject(min.cells = 3, min.features = 500)
+  } else {
+    x <- Read10X(tenXdir) %>%
+      CreateSeuratObject
+  }
+}
+
+
+# Merge 10X mtx, bracodes and features to a dictionary
+Merge_10Xfile_to_10Xdir <- function(tenXfileDir, prefix){
+  mtxDir <- paste0(tenXfileDir, '/', prefix, 'matrix.mtx.gz')
+  barDir <- paste0(tenXfileDir, '/', prefix, 'barcodes.tsv.gz')
+  feaDir <- paste0(tenXfileDir, '/', prefix, 'features.tsv.gz')
+  tenXdir <- prefix
+  if(substr(prefix, nchar(prefix), nchar(prefix)) == "_"){
+    # 如果是，删除它
+    tenXdir <- substr(prefix, 1, nchar(prefix) - 1)
+
+  }
+  tenXdir <- paste0(tenXfileDir, '/', tenXdir)
+  dir.create(tenXdir)
+  file.copy(mtxDir, paste0(tenXdir, '/', 'matrix.mtx.gz'))
+  file.copy(barDir, paste0(tenXdir, '/', 'barcodes.tsv.gz'))
+  file.copy(feaDir, paste0(tenXdir, '/', 'features.tsv.gz'))
+  return(tenXdir)
+}
+
+
 # Load scRNA-seq data by the users' definition: mtx barcodes and features
 Load_sc_to_SCE <- function(scbar, scfea, scmat, scgth = NA, scgnm = NA){
   bar <- fread(scbar, header = F)[[1]]

@@ -12,3 +12,18 @@ def Spatial_Cluster_Analysis(adata, n_top_genes=2000, n_comps=50):
     sc.tl.umap(adata)
     sc.tl.leiden(adata, key_added='clusters')
     return adata
+
+
+# obsm = pd.DataFrame()
+# for idx, model in enumerate(models):
+#     losses = []
+#     with torch.no_grad():
+#         for i, x in enumerate(data_loader0):
+#             x = x.to(device).view(-1, count_size)
+#             x_reconst, mu, log_var = model(x)
+#             reconst_loss = F.binary_cross_entropy(x_reconst, x, reduction='mean')
+#             kl_div = - 0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+#
+#             loss = np.float((reconst_loss + kl_div).cpu())
+#             losses.append(loss)
+#     obsm[uni_types[idx]] = losses

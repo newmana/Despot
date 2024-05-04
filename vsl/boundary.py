@@ -103,6 +103,10 @@ def show_edge(edges, ax, label='SCSP', z=None, color='red', linewidth=1, alpha=0
             ax.plot(x, y, color=color, alpha=alpha, linewidth=linewidth, linestyle='-', label=label)
         else:
             ax.plot(x, y, [z] * (len(x)), color=color, alpha=alpha, linewidth=linewidth, linestyle='-', label=label)
+    ret_lines = []
+    ret_lines.extend(lines)
+    ret_lines.extend(exist_edges)
+    return ret_lines
     # lines = []
     # for i in range(len(edf)):
     #     linex, liney = [], []

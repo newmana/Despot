@@ -253,16 +253,7 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
                 break
         Best_dict[ct] = (f1score, tuple(domain_list), mtd)
 
-    # Save_spt_from_BestDict(smdFile, Best_dict)
-    # find markers for each region
-    # for cell_type in Best_dict.keys():
-    #     region = Best_dict[cell_type][1]
-    #     mtd = Best_dict[cell_type][2]
-    #     clu_mtd = mtd.split('+')[2]
-    #     dcv_mtd = mtd.split('+')[1]
-    #     dct_mtd = mtd.split('+')[0]
-    #     adata = Load_spt_to_AnnData(smdFile, count=dct_mtd)
-    #     sc.tl.filter_rank_genes_groups(adata, key=region, groupby=clu_mtd)
+    Save_smd_from_BestDict(smdFile, Best_dict)
     return Best_dict, Best_Fscore
 
 
@@ -694,7 +685,7 @@ def Show_bash_best_group(smdFile, folder, Best_dict=None):
         mtd_chain = dct_mtd + '+' + dcv_mtd + '+' + clu_mtd
         fig_cell_type = cell_type.replace('/', '.')  # illegal `/` in file path
         figname = folder + "/" + fig_cell_type + ".svg"
-        fig = Show_best_group(smdFile, cell_type, fscore, domain, mtd_chain, figname, save=True)
+        ret_dict = Show_best_group(smdFile, cell_type, fscore, domain, mtd_chain, figname, save=True)
 
 
 def Show_row_best_group(smdFile, folder, cell_types, file_name='domains1.svg', imgPath=None, titles=None, cmap='cividis', ap=100):
@@ -711,6 +702,9 @@ def Show_row_best_group(smdFile, folder, cell_types, file_name='domains1.svg', i
     else:
         fig, axs = plt.subplots(1, nct, figsize=(3.5 * nct, 3.2))
     plt.subplots_adjust(wspace=0.05, hspace=0)
+    ret_dict = {}
+    ret_dict['lines'] = {}
+    ret_dict['props'] = {}
     for i in range(nct):
         cell_type = cell_types[i]
         if titles:
@@ -722,10 +716,17 @@ def Show_row_best_group(smdFile, folder, cell_types, file_name='domains1.svg', i
         f1score = Best_item['F1-score']
         dct_mtd, dcv_mtd, clu_mtd = Best_item['dct'], Best_item['dcv'], Best_item['clu']
         adata = Load_smd_to_AnnData(smdFile, h5data=dct_mtd, loadDeconv=True, platform=platform)
-        Ax_prop_domains(adata, clu_mtd, dcv_mtd, domain, cell_type, axs[i],
+        ret_props = Ax_prop_domains(adata, clu_mtd, dcv_mtd, domain, cell_type, axs[i],
                         title=title, f1score=f1score, platform=platform, imgPath=imgPath, cmap=cmap, ap=ap)
+        if 'index' not in ret_dict.keys():
+            ret_dict['index'] = ret_props['index']
+            ret_dict['image_row'] = ret_props['image_row']
+            ret_dict['image_col'] = ret_props['image_col']
+        ret_dict['lines'][cell_type] = ret_props['lines']
+        ret_dict['props'][cell_type] = ret_props['prop']
     figname = folder + "/"+file_name
     fig.savefig(figname, dpi=400)
+    return ret_dict
 
 
 def Show_row_marker_genes(smdFile, folder, genes, cell_types=None, spmatrix=None,figname='gene.svg', cmap='coolwarm'):
@@ -1289,6 +1290,26 @@ def Gen_DEgenes(adata, groupby, groups, pval=10e-5, effect=0.2, only_positive=Tr
     if only_positive:
         DE_genes = DE_genes[DE_genes['scores'] > 0]
     return DE_genes
+
+def Gen_Dot_Heatmap(adata, top=5):
+    sc.tl.filter_rank_genes_groups(adata, groupby='annotation')
+    DE_genes = pd.DataFrame(adata.uns['rank_genes_groups_filtered']['names'])
+    item_df = pd.DataFrame(columns=['cell', 'gene', 'expr', 'frac'])
+    top_genes = np.array(DE_genes.iloc[:top, :]).flatten(order='F')
+    cell_types = np.unique(adata.obs['annotation'])
+    adata_cp = adata[:, top_genes]
+    for ct in cell_types:
+        expr = adata_cp[adata_cp.obs['annotation']==ct].X.mean(axis=0).A1
+        frac = np.array(np.mean(adata_cp[adata_cp.obs['annotation']==ct].X > 0.5, axis=0)).flatten()
+        df = pd.DataFrame([top_genes, expr, frac], index=['gene', 'expr', 'frac']).T
+        df['cell'] = ct
+        item_df = pd.concat([item_df, df], ignore_index=True)
+    json_str = item_df.to_json(orient="records")
+    json_obj = json.loads(json_str)
+    sc.tl.dendrogram(adata, groupby="annotation")
+    den_obj = adata.uns['dendrogram_annotation']['dendrogram_info']
+
+    return json_obj
 
 
 def Gen_Background_genes(adata_sp: ad.AnnData, adata_sc1: ad.AnnData, adata_sc2=None):

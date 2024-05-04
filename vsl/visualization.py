@@ -139,6 +139,9 @@ def Ax_prop_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, ax, title, f1sc
 
     # property
     prop = adata.obsm[dcv_mtd][cell_type]
+    lines = []
+    x, y = [], []
+    sf = 1
 
     if platform == '10X_Visium':
         adata.obs[cell_type] = prop
@@ -157,7 +160,8 @@ def Ax_prop_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, ax, title, f1sc
         ax.imshow(adata.uns['spatial'][img_key]['images']['lowres'][ymin:ymax, xmin:xmax], alpha=0.8)
         ax.scatter(x=x, y=y, c=prop,
                        cmap=cmap, marker='.', s=10)
-        show_edge(edges, ax, label='F1score: %.3f' % f1score, linewidth=1.5)
+        lines = show_edge(edges, ax, label='F1score: %.3f' % f1score, linewidth=1.5)
+        print("vsl_lines:",lines)
         ax.set_xticks(ticks=[])
         ax.set_yticks(ticks=[])
         ax.set_xlabel('')
@@ -189,7 +193,7 @@ def Ax_prop_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, ax, title, f1sc
         # ax.imshow(np.array(img), alpha=0.8)
         ax.scatter(x=x, y=y, c=prop,
                        cmap='cividis', marker='o', s=25)
-        show_edge(edges, ax, label='F1score: %.3f' % f1score, linewidth=1.5)
+        lines = show_edge(edges, ax, label='F1score: %.3f' % f1score, linewidth=1.5)
         ax.set_xticks(ticks=[])
         ax.set_yticks(ticks=[])
         ax.set_xlabel('')
@@ -206,6 +210,15 @@ def Ax_prop_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, ax, title, f1sc
                       handlelength=0.7,
                       fontsize=12)
         ax.set_title(title)
+    ret_dict = {
+        'index': list(adata.obs_names),
+        'image_row': list(x),
+        'image_col':list(y),
+        'lines': lines,
+        'prop': list(prop),
+        'f1score': f1score,
+    }
+    return ret_dict
 
 
 def Show_matched_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, f1score, platform='ST'):
@@ -409,6 +422,13 @@ def Show_Umap(smdFile, figname, h5data='matrix', is_spatial=True, key='ground_tr
               columnspacing=0.7,
               handlelength=0.7)
     fig.savefig(figname, dpi=400)
+    json_df = pd.DataFrame(adata.obsm['X_umap'], columns=['umap_0', 'umap_1'], index=adata.obs_names)
+    json_df = pd.concat([json_df, adata.obs['annotation']], axis=1)
+    json_df = json_df.reset_index()
+    json_str = json_df.to_json(orient="records")
+    json_obj = json.loads(json_str)
+    return json_obj
+
 
 def Show_colored_Umap(smdFile, figname, h5data='SPCS_mat'):
     adata = Load_smd_to_AnnData(smdFile, h5data)
@@ -424,7 +444,11 @@ def Show_colored_Umap(smdFile, figname, h5data='SPCS_mat'):
     umap_color = adata.obsm['X_umap']
     norm_color = (umap_color - np.nanmin(umap_color)) / (np.nanmax(umap_color) - np.nanmin(umap_color))
     fig, axs = plt.subplots(1, 1, figsize=(3, 3), constrained_layout=True)
-
+    norm_df = pd.DataFrame(norm_color, columns=['umap_0', 'umap_1', 'umap_2'], index=adata.obs_names)
+    norm_df = pd.concat([norm_df, adata.obs], axis=1)
+    norm_df = norm_df.reset_index()
+    json_str = norm_df.to_json(orient="records")
+    json_obj = json.loads(json_str)
     # axs[0].scatter(x=adata.obs['array_row'], y=adata.obs['array_col'], c=[], edgecolors='grey', alpha=0.8, marker='o', linewidths=0.8)
     # axs[0].scatter(x=adata0.obs['array_row'], y=adata0.obs['array_col'], c=labels0, marker='o', alpha=0.7)
     axs.scatter(x=adata.obs['array_col'], y=-adata.obs['array_row'], c=norm_color, marker='.')
@@ -435,6 +459,7 @@ def Show_colored_Umap(smdFile, figname, h5data='SPCS_mat'):
     axs.spines.left.set_visible(False)
     axs.spines.right.set_visible(False)
     fig.savefig(figname, dpi=400)
+    return json_obj
 
 
 def Show_Spatial_and_Umap(smdFile, h5data='matrix', key='BayesSpace'):
