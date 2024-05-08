@@ -242,6 +242,100 @@ Save_10X_to_smd <- function(dir, smdFile, filtered.matrix = T, name = "",
   Create_smd_array1d(smdFile, img@spot.radius, "sptimages/spot_radius", "double")
 }
 
+# Save H5ad data to smd
+Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", ground_truth="cell_type_annot"){
+  # Save name
+  if(length(name) != 0){
+    Create_smd_array1d(smdFile, name, "name", "character")
+  }
+  # Save platform
+  Create_smd_array1d(smdFile, platform, "platform", "character")
+  
+  # Load H5ad data to smdFile
+  scmat <- h5read(H5adir, '/')
+  if("raw" %in% attr(scmat, "names")){
+    X <- scmat$raw$X
+    clsX <- class(X)
+    if(length(clsX)>1)
+      clsX <- clsX[1]
+    if(clsX!="list"){
+      X <- Matrix(X)
+      dat <- as(X, "CsparseMatrix")
+    }
+    h5ad.var <- scmat$raw$var
+  } else{
+    X <- scmat$X
+    dat <- sparseMatrix(i = X$indices[] + 1,
+                        p = X$indptr[],
+                        x = as.numeric(X$data[]),
+                        repr = "C")
+    h5ad.var <- scmat$var
+  }
+  h5ad.obs <- scmat$obs
+  dims <- c(length(h5ad.var[["_index"]]), length(h5ad.obs[["_index"]]))
+  dat@Dim <- dims
+  barcodes <- as.character(h5ad.obs[["_index"]])
+  dat@Dimnames <- list(as.character(h5ad.var[["_index"]]), barcodes)
+  Create_smd_array1d(smdFile, barcodes, "matrix/barcodes", "character")
+  Create_smd_array1d(smdFile, dat@x, "matrix/data", "integer")
+  Create_smd_array1d(smdFile, dat@i, "matrix/indices", "integer")
+  Create_smd_array1d(smdFile, dat@p, "matrix/indptr", "integer")
+  Create_smd_array1d(smdFile, dat@Dim, "matrix/shape", "integer")
+  
+  # Load H5ad data groud_truth to smdFile
+  if(ground_truth %in% attr(h5ad.obs, "names")){
+    if("__categories" %in% attr(h5ad.obs, "names")){ # old anndata
+        if(length(h5ad.obs[[ground_truth]]) >= length(h5ad.obs[["__categories"]][[ground_truth]])){
+          gt <- factor(h5ad.obs[[ground_truth]], labels = h5ad.obs[["__categories"]][[ground_truth]])
+        }else{
+          gt <- h5ad.obs[[ground_truth]]
+        }
+    }else{ # new anndata
+      if(class(h5ad.obs[[ground_truth]]) == "list"){
+        gt <- factor(h5ad.obs[[ground_truth]]$codes, labels = h5ad.obs[[ground_truth]]$categories)  
+      }else{
+        gt <- h5ad.obs[[ground_truth]]
+      }
+    }
+    gt <- as.character(gt)
+    Create_smd_array1d(smdFile, gt, "matrix/idents/ground_truth", "character")
+  }
+  
+  # Load H5ad data features to smdFile
+  var <- list()
+  if("__categories" %in% attr(h5ad.var, "names")){ # old anndata
+    for(name in attr(h5ad.var[["__categories"]], "names")){
+      if(length(h5ad.var[[name]]) >= length(h5ad.var[["__categories"]][[name]])){
+        var[[name]] <- factor(h5ad.var[[name]], labels = h5ad.var[["__categories"]][[name]])
+      }
+    }
+  } else {
+    for(name in attr(h5ad.var, "names")){
+      if(name!='_index')
+        if(class(h5ad.var[[name]]) == "list"){
+          var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
+        }else{
+          var[[name]] <- h5ad.var[[name]]
+        }
+    }
+  }
+  for(fea in attr(var, "names")){
+    if(fea=="feature_name"){
+      Create_smd_array1d(smdFile, as.character(var[[fea]]), "matrix/features/name", "character")
+    } else{
+      Create_smd_array1d(smdFile, as.character(var[[fea]]),
+                         paste0("matrix/features/", fea), "character") 
+    }
+  }
+  
+  # Load H5ad data coord to smdFile
+  coord <- scmat$obsm$spatial
+  Create_smd_array1d(smdFile, coord[1,], "sptimages/coordinates/row", "double")
+  Create_smd_array1d(smdFile, coord[2,], "sptimages/coordinates/col", "double")
+  Create_smd_array1d(smdFile, barcodes, "sptimages/coordinates/index", "character")
+  message(paste0("Saved ",H5adir, " to ", smdFile))
+}
+
 # Save SlideSeq data to smd
 Save_SlideSeq_to_smd <- function(dir, smdFile, name=""){
   # Save name

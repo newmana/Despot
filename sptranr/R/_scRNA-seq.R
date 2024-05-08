@@ -418,31 +418,62 @@ Load_h5adsc_to_SCE <- function(scmat, scgnm = NA){
   scmat <- h5read(scmat, '/')
   if("raw" %in% attr(scmat, "names")){
     X <- scmat$raw$X
-    var <- scmat$raw$var
+    clsX <- class(X)
+    if(length(clsX)>1)
+      clsX <- clsX[1]
+    if(clsX!="list"){
+      X <- Matrix(X)
+      dat <- as(X, "CsparseMatrix")
+    }
+    h5ad.var <- scmat$raw$var
   } else{
     X <- scmat$X
-    var <- scmat$var
+    dat <- sparseMatrix(i = X$indices[] + 1,
+                        p = X$indptr[],
+                        x = as.numeric(X$data[]),
+                        repr = "C")
+    h5ad.var <- scmat$var
   }
   # generate factors using categories
-  for(name in attr(var[["__categories"]], "names")){
-    if(length(var[[name]]) >= length(var[["__categories"]][[name]])){
-      var[[name]] <- factor(var[[name]], labels = var[["__categories"]][[name]])
+  
+  var <- list()
+  if("__categories" %in% attr(h5ad.var, "names")){ # old anndata
+    for(name in attr(h5ad.var[["__categories"]], "names")){
+      if(length(h5ad.var[[name]]) >= length(h5ad.var[["__categories"]][[name]])){
+        var[[name]] <- factor(h5ad.var[[name]], labels = h5ad.var[["__categories"]][[name]])
+      }
+    }
+  } else {
+    for(name in attr(h5ad.var, "names")){
+      if(name!='_index')
+        if(class(var[[name]]) == "list"){
+          var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
+        }else{
+          var[[name]] <- h5ad.var[[name]]
+        }
     }
   }
-  var[["__categories"]] <- NULL
-  obs <- scmat$obs
-  for(name in attr(obs[["__categories"]], "names")){
-    if(length(obs[[name]]) >= length(obs[["__categories"]][[name]]))
-      obs[[name]] <- factor(obs[[name]], labels = obs[["__categories"]][[name]])
+  h5ad.obs <- scmat$obs
+  obs <- list()
+  if("__categories" %in% attr(h5ad.obs, "names")){ # old anndata
+    for(name in attr(h5ad.obs[["__categories"]], "names")){
+      if(length(h5ad.obs[[name]]) >= length(h5ad.obs[["__categories"]][[name]]))
+        obs[[name]] <- factor(h5ad.obs[[name]], labels = h5ad.obs[["__categories"]][[name]])
+    }
+  } else{ # new anndata
+    for(name in attr(h5ad.obs, "names")){
+      if(name!='_index')
+        if(class(h5ad.obs[[name]]) == "list"){
+          obs[[name]] <- factor(h5ad.obs[[name]]$codes, labels = h5ad.obs[[name]]$categories)  
+        }else{
+          obs[[name]] <- h5ad.obs[[name]]
+        }
+    }
   }
-  obs[["__categories"]] <- NULL
-  dims <- c(length(scmat$var[["_index"]]), length(scmat$obs[["_index"]]))
-  dat <- sparseMatrix(i = X$indices[] + 1,
-                      p = X$indptr[],
-                      x = as.numeric(X$data[]),
-                      dims = dims,
-                      dimnames = list(as.character(scmat$var[["_index"]]), as.character(scmat$obs[["_index"]])),
-                      repr = "C")
+
+  dims <- c(length(h5ad.var[["_index"]]), length(h5ad.obs[["_index"]]))
+  dat@Dim <- dims
+  dat@Dimnames <- list(as.character(h5ad.var[["_index"]]), as.character(h5ad.obs[["_index"]]))
   sce <- SingleCellExperiment(assays = list(counts = dat),
                               rowData = DataFrame(data.frame(var)),
                               colData = DataFrame(data.frame(obs)))
