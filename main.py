@@ -23,16 +23,18 @@ def SMD_init(smdFile: str, force: bool = False):
     print("Done.")
 
 
+def Replicate_run(cfg:dict, iterations=1):
+    smdFile = cfg['smdFile']
+    cfg['smdFile'] = f"{smdFile.split('.')[0]}-{iterations}.h5smd"
+    return cfg
+
 if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
-        if cfg_name == 'PDAC-A.json':
+        if cfg_name == 'CID4971.json':
             cfg_path = 'configs/' + cfg_name
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")
-            smdFile = cfg['smdFile']
-            name = cfg['name']
-            platform = cfg['platform']
 
             # set python path
             pythonPath = sys.executable
@@ -46,22 +48,28 @@ if __name__ == "__main__":
 
             # set venv
             cfg["venv"] = sys.prefix.split('/')[-1]
-            cfg_json = json.dumps(cfg)
 
-            # set running configs
-            Save_json_configs(cfg, "params.json")
-            Save_smd_from_configs(smdFile, items=cfg)
-            # need hires?
-            hires = cfg['load_hires']
-            print("=========Despot Info============")
-            print("smdFile:{0}".format(smdFile))
-            print("dataset name:{0}".format(name))
-            print("platform:{0}".format(platform))
-            print("Using hires img: {0}".format(hires))
-            print("=========Despot Start===========")
-            SMD_init(smdFile=smdFile)
-            Despot_Decont(smdFile, cfg)
-            Despot_Cluster(smdFile, cfg)
-            Despot_Deconv(smdFile, cfg)
-            Despot_Ensemble(smdFile)
-            print("=========Despot Finish==========")
+            for i in range(1,10):
+                smdFile0 = cfg['smdFile']
+                name = cfg['name']
+                platform = cfg['platform']
+                cfg['smdFile'] = f"{smdFile0.split('.')[0]}-{i}.h5smd"
+                cfg_json = json.dumps(cfg)
+                smdFile = cfg['smdFile']
+                # set running configs
+                Save_json_configs(cfg, "params.json")
+                Save_smd_from_configs(smdFile, items=cfg)
+                # need hires?
+                hires = cfg['load_hires']
+                print(f"=========Despot {i} Info============")
+                print("smdFile:{0}".format(smdFile))
+                print("dataset name:{0}".format(name))
+                print("platform:{0}".format(platform))
+                print("Using hires img: {0}".format(hires))
+                print(f"=========Despot {i} Start===========")
+                SMD_init(smdFile=smdFile)
+                Despot_Decont(smdFile, cfg)
+                Despot_Cluster(smdFile, cfg)
+                Despot_Deconv(smdFile, cfg)
+                Despot_Ensemble(smdFile)
+                print(f"=========Despot {i} Finish==========")

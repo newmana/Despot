@@ -89,9 +89,11 @@ def Cell2Location_rg_sc(adata_sc, max_epoches=250, batch_size=2500, train_size=1
     inf_aver.columns = adata_sc.uns['mod']['factor_names']
     return inf_aver
 
-def Cell2Location_pp_sp(smdFile, h5data):
+def Cell2Location_pp_sp(smdFile:str, h5data:str) -> ad.AnnData:
     info = smdInfo(smdFile)
     adata_sp = Load_smd_to_AnnData(smdFile, h5data=h5data)
+    if h5data == 'SPCS_mat':
+        adata_sp.X = np.array(np.exp(adata_sp.X) - 1)
     adata_sp.var_names_make_unique()
     adata_sp.obs['sample'] = info.name
 
@@ -109,7 +111,7 @@ def Cell2Location_pp_sp(smdFile, h5data):
 
 def Cell2Location_rg_sp(adata_sp, inf_aver, N_cells_per_location=30, detection_alpha=20,
                         max_epoches=10000, batch_size=None, train_size=1, lr=0.002,
-                        num_samples=1000, use_gpu=False):
+                        num_samples=1000, use_gpu=True):
     # do spatial mapping
     # find shared genes and subset both anndata and reference signatures
     intersect = np.intersect1d(adata_sp.var['gene_name'], inf_aver.index)

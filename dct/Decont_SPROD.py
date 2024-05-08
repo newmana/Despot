@@ -6,7 +6,7 @@ from utils.io import Load_smd_to_AnnData, Save_tsv_from_spData, Save_meta_from_s
 from utils.check import Check_Requirements
 
 
-def spagcn_install():
+def sprod_install():
     print("Dependencies will be installed when Using SPROD for the first time.")
 
     # download SPROD handle python dependencies

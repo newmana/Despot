@@ -291,7 +291,7 @@ def Load_smd_to_AnnData(smdFile: str,
                         loadDeconv: bool = False,
                         loadImg: bool = True,
                         platform: str = '10X_Visium',
-                        dtype='float32'):
+                        dtype='float32') -> ad.AnnData:
     # use h5py to load origin info
     with h5.File(smdFile, 'r') as h5_obj:
         h5mat = h5_obj['matrix']

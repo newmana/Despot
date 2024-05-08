@@ -28,7 +28,9 @@ for(decont in params$Decontamination){
   anno <- table(anno)
   sr <- Load_smd_to_SpatialRNA(smdFile, h5data)
   ref <- GenerateRef_spacexr(sce)
+  ref <- GenerateRef_spacexr(sce)
   rctd <- Deconvolution_spacexr(sr, ref)
   rctd@results$weights@Dimnames[[2]] <- attr(anno, "names")
   Save_smd_from_spacexr(smdFile, h5data, rctd, pp_mtd = "es")
+  message(paste0("Deconvolution with `spacexr_es` finished, idents saved in /", decont, "/deconv/spacexr_es"))
 }

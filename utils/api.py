@@ -152,7 +152,10 @@ def Pip_decont(smdFile, cfg, method='none', force=False, ):
     # do decontamination
     if method == 'SpotClean':
         print("Decontamination method: SpotClean.")
-        os.system("Rscript dct/Decont_SpotClean.R")
+        if cfg['platform'] == 'ST':
+            print("SpotClean only support 10X series. But your platform is ST")
+        else:
+            os.system("Rscript dct/Decont_SpotClean.R")
     elif method == 'SPCS':
         print("Decontamination method: SPCS.")
         os.system("Rscript dct/Decont_SPCS.R")
@@ -289,7 +292,7 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", force=False,
         StereoScope_pp_VAE(smdFile, tempdir="temps", h5data=h5data,  standard_size=standard_size)
         StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
         Wfile = os.listdir("temps/stsc_res/spt_data")[0]
-        Wfile = "temps/stsc_res/spt_data" + Wfile
+        Wfile = "temps/stsc_res/spt_data/" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope')
         os.remove(Wfile)
     elif method == 'StereoScope_es':
@@ -300,7 +303,7 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", force=False,
         StereoScope_pp_EasySample(smdFile, h5data=h5data, standard_size=standard_size)
         StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
         Wfile = os.listdir("temps/stsc_res/spt_data")[0]
-        Wfile = "temps/stsc_res/spt_data" + Wfile
+        Wfile = "temps/stsc_res/spt_data/" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_es')
         os.remove(Wfile)
     elif method == 'StereoScope_na':
@@ -311,18 +314,18 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", force=False,
         StereoScope_pp_na(smdFile, h5data=h5data)
         StereoScope_run(stereo_dir="temps/stsc_temp", pythonPath=pythonPath, out_dir="temps/stsc_res")
         Wfile = os.listdir("temps/stsc_res/spt_data")[0]
-        Wfile = "temps/stsc_res/spt_data" + Wfile
+        Wfile = "temps/stsc_res/spt_data/" + Wfile
         Save_smd_from_StereoScope(smdFile, Wfile, h5data, name='StereoScope_na')
         os.remove(Wfile)
     elif method == 'Cell2Location':
         from dcv.cell2location import cell2location_install
         cell2location_install()
         from dcv.cell2location import Cell2Location_run
-        # try:
-        adata = Cell2Location_run(smdFile, h5data)
-        Save_smd_from_Cell2Location(smdFile, adata, h5data)
-        # except:
-        #     print("The distribution of data may not suitable for Cell2Location.")
+        try:
+            adata = Cell2Location_run(smdFile, h5data)
+            Save_smd_from_Cell2Location(smdFile, adata, h5data)
+        except:
+            print("The distribution of data may not suitable for Cell2Location.")
     elif method == 'Seurat':
         state = subprocess.call(["Rscript", "dcv/Deconv_Seurat.R"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if state == 0:

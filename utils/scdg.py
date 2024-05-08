@@ -3,6 +3,7 @@ import os
 import torch
 import torch.utils.data as Data
 import torch.nn as nn
+import scanpy as sc
 import torch.nn.functional as F
 from sklearn.preprocessing import MinMaxScaler
 # Single Cell Referenecs Down Sampling Through Graph Convolution Network
@@ -14,28 +15,24 @@ class VAE(nn.Module):
     def __init__(self, count_size = 3000, h_dim=400, z_dim=20):
         super(VAE, self).__init__()
         self.fc1 = nn.Linear(count_size, h_dim)
-        self.fc2 = nn.Linear(h_dim, z_dim)  # 均值 向量
-        self.fc3 = nn.Linear(h_dim, z_dim)  # 保准方差 向量
+        self.fc2 = nn.Linear(h_dim, z_dim)
+        self.fc3 = nn.Linear(h_dim, z_dim)
         self.fc4 = nn.Linear(z_dim, h_dim)
         self.fc5 = nn.Linear(h_dim, count_size)
 
-    # 编码过程
     def encode(self, x):
         h = F.relu(self.fc1(x))
         return self.fc2(h), self.fc3(h)
 
-    # 随机生成隐含向量
     def reparameterize(self, mu, log_var):
         std = torch.exp(log_var / 2)
         eps = torch.randn_like(std)
         return mu + eps * std
 
-    # 解码过程
     def decode(self, z):
         h = F.relu(self.fc4(z))
         return torch.sigmoid(self.fc5(h))
 
-    # 整个前向传播过程：编码-》解码
     def forward(self, x):
         mu, log_var = self.encode(x)
         z = self.reparameterize(mu, log_var)
@@ -150,7 +147,7 @@ def Easy_Sample(scdata, standard_size=25, add_filter=None):
     return scdata0
 
 def Save_tsv_from_ref(reference: pd.DataFrame, label: pd.DataFrame, tempdir, name):
-    tsvPath = tempdir + "/references/" + name + '/'
+    tsvPath = f"{tempdir}/{name}/"
     if not os.path.exists(tsvPath):
         os.mkdir(tsvPath)
     reference.to_csv(tsvPath + '/cnt_data.tsv', sep='\t')
