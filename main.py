@@ -1,13 +1,15 @@
 from utils.check import *
-print("Importing requirements...")
+print("Checking requirements...")
 Check_Environments()
 Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch"})
+print("Importing requirements...")
 import json
 import shutil
 from utils.io import *
 from utils.api import Create_h5datas, Despot_Decont, Despot_Cluster, Despot_Deconv, Despot_Ensemble
 from utils.geo import Despot_Find_bestGroup, Despot_group_correlation,\
     Show_self_correlation, Show_bash_best_group, Gen_venn
+print("All requirements imported...")
 
 
 def SMD_init(smdFile: str, force: bool = False):
@@ -31,7 +33,7 @@ def Replicate_run(cfg:dict, iterations=1):
 if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
-        if cfg_name == 'CID4971.json':
+        if cfg_name == 'MERFISH_10_0.json':
             cfg_path = 'configs/' + cfg_name
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")
@@ -49,7 +51,7 @@ if __name__ == "__main__":
             # set venv
             cfg["venv"] = sys.prefix.split('/')[-1]
 
-            for i in range(1,10):
+            for i in range(1):
                 smdFile0 = cfg['smdFile']
                 name = cfg['name']
                 platform = cfg['platform']

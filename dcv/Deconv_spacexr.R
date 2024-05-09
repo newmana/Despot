@@ -16,19 +16,20 @@ if(is.null(platform)){
 }
 
 for(decont in params$Decontamination){
-  h5data <- Create_spt_h5data(decont)
+  h5data <- Create_smd_h5data(decont)
   if(platform != "10X_Visium" && h5data == "SpotClean_mat"){
     message("SpotClean only Support 10X Visium data, skip it.")
     next
   }
   # read References
-  sce <- Load_sptsc_to_SCE(smdFile, "sc-ref")
+  sce <- Load_smdsc_to_SCE(smdFile, "sc-ref")
   anno <- sce$free_annotation
   sce$free_annotation <- gsub("/", "^", anno)   #cell-types in RCTD don't support `/`, transport to `^`
   anno <- table(anno)
-  sr <- Load_spt_to_SpatialRNA(smdFile, h5data)
+  sr <- Load_smd_to_SpatialRNA(smdFile, h5data)
   ref <- GenerateRef_spacexr(sce)
   rctd <- Deconvolution_spacexr(sr, ref)
   rctd@results$weights@Dimnames[[2]] <- attr(anno, "names")
-  Save_spt_from_spacexr(smdFile, h5data, rctd)
+  Save_smd_from_spacexr(smdFile, h5data, rctd)
+  message(paste0("Deconvolution with `spacexr` finished, idents saved in /", decont, "/deconv/spacexr"))
 }

@@ -427,7 +427,7 @@ def Load_smd_to_AnnData(smdFile: str,
     return adata
 
 
-def Load_smd_sc_to_AnnData(smdFile, h5data='scRNA_seq'):
+def Load_smd_sc_to_AnnData(smdFile:str, h5data='scRNA_seq') -> ad.AnnData:
     h5_obj = h5.File(smdFile, 'r')
     # the scRNA-seq Data is saved in 'scRNA_seq', using Sparse Matrix
     scRNA_seq = h5_obj[h5data]

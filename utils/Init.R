@@ -58,5 +58,13 @@ if(platform %in% c("10X", "10X_Visium", "Visium", "visium", "10X Visium")){
   Save_ST_to_smd(st = st,
                  smdFile = smdFile,
                  name = name)
+} else if(platform %in% c("MERFISH", "merFISH")){
+  dataName <- params$dataName
+  H5adir <- paste0(dataPath, '/', dataName)
+  Save_H5ad_to_smd(H5adir = H5adir,
+                   smdFile = smdFile,
+                   name = name,
+                   platform = params$platform,
+                   ground_truth = params$ground_name)
 }
 

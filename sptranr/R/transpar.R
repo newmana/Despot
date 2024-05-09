@@ -333,6 +333,10 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   Create_smd_array1d(smdFile, coord[1,], "sptimages/coordinates/row", "double")
   Create_smd_array1d(smdFile, coord[2,], "sptimages/coordinates/col", "double")
   Create_smd_array1d(smdFile, barcodes, "sptimages/coordinates/index", "character")
+
+  # All spots in MERFISH are in tissue
+  Create_smd_array1d(smdFile, rep(1, length(barcodes)), "sptimages/coordinates/tissue", "integer")
+
   message(paste0("Saved ",H5adir, " to ", smdFile))
 }
 
