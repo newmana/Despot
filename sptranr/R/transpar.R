@@ -332,6 +332,8 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   coord <- scmat$obsm$spatial
   Create_smd_array1d(smdFile, coord[1,], "sptimages/coordinates/row", "double")
   Create_smd_array1d(smdFile, coord[2,], "sptimages/coordinates/col", "double")
+  Create_smd_array1d(smdFile, coord[1,], "sptimages/coordinates/imagerow", "double")
+  Create_smd_array1d(smdFile, coord[2,], "sptimages/coordinates/imagecol", "double")
   Create_smd_array1d(smdFile, barcodes, "sptimages/coordinates/index", "character")
 
   # All spots in MERFISH are in tissue
