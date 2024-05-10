@@ -28,6 +28,6 @@
   "Decontamination": ["none"],
   "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "SEDR"],
   "Estimation": ["SPARK", "SpaGCN"],
-  "Deconvolution": ["CARD","Cell2Location","SPOTlight", "SPOTlight_es", "SPOTlight_vae","spacexr", "spacexr_es", "StereoScope", "StereoScope_na", "StereoScope_es"],
+  "Deconvolution": ["Seurat", "Giotto","CARD","Cell2Location","SPOTlight", "SPOTlight_es", "SPOTlight_vae","spacexr", "spacexr_es", "StereoScope", "StereoScope_na", "StereoScope_es"],
   "Enhancement": "BayesSpace"
 }

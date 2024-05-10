@@ -17,6 +17,7 @@ from statistics import mean, stdev
 from math import sqrt
 import networkx as nx
 import seaborn as sns
+from utils.hyperParams import getMoranHP
 
 
 def p_moransI_purity(adata, dcv_mtd: str, clu: str):
@@ -184,10 +185,7 @@ def Despot_findgroups(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=N
                 mtd_name = "{0}+{1}+{2}".format(spmat, dcv, clu)
                 print("Finding Groups in the combination of {0}".format(mtd_name))
                 perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
-                if platform in ['MERFISH', "Slide-seq"]:   # for single-cell resolution, the morans Index will divide 10
-                    perf = perf[perf['moransI'] > 0.05]
-                else:
-                    perf = perf[perf['moransI'] > 0.5]
+                perf = perf[perf['moransI'] > getMoranHP(platform)]
                 BST = suitable_location(adata, perf, clu, beta, greedy)
                 Best_Fscore[mtd_name] = BST
     return Best_Fscore
@@ -220,10 +218,7 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
         else:
             domain_list = [d for d in domains]
         perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
-        if platform in ['MERFISH', "Slide-seq"]:  # for single-cell resolution, the morans Index will divide 10
-            perf = perf[perf['moransI'] > 0.05]
-        else:
-            perf = perf[perf['moransI'] > 0.5]
+        perf = perf[perf['moransI'] > getMoranHP(platform)]
         spots = adata.obs['p_moransI_' + ct]
         clusters = adata.obs[clu]
         clu_num = np.unique(adata.obs[clu])
@@ -281,7 +276,7 @@ def Pipline_findgroups(smdFile, pipline, beta=1, greedy=1):
         for clu in clu_mtds:
             if clu == pipline and dcv == pipline:
                 perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
-                perf = perf[perf['moransI'] > 0.5]
+                perf = perf[perf['moransI'] > getMoranHP(platform)]
                 BST = suitable_location(adata, perf, clu, beta, greedy)
     return BST
 
@@ -391,7 +386,7 @@ def Fscore_Comparison_pip(smdFile, has_ground_truth=False):
         pip_res['ground_truth'] = best_df['F1-score']
     return pip_res.T
 
-def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_type=None, title='F1-score', has_ground_truth=False):
+def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_type=None, title='F1-score', has_ground_truth=False, save=False):
     from vsl.palette import Set_palette
     plt.rcParams["font.sans-serif"] = ["Arial"]
     plt.rcParams["axes.unicode_minus"] = False
@@ -437,7 +432,8 @@ def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_typ
     ax.set_xlim(-0.5, max(x)+all_width)
     ax.spines.top.set_visible(False)
     ax.spines.right.set_visible(False)
-    fig.savefig(folder+'/platform_comparison.svg', dpi=400)
+    if save:
+        fig.savefig(folder+'/platform_comparison.svg', dpi=400)
     return fig
 
     # for i in range(len(comp_mtd)):
