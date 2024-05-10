@@ -21,7 +21,7 @@ Deconvolution_SPOTlight <- function(spe, sce){
 # save smd from SPOTlight results
 Save_smd_from_SPOTlight <- function(smdFile, h5data, spotlight, pp_mtd="raw"){
 
-  results <- as(spotlight$mat, "dgeMatrix")
+  results <- as(spotlight$mat, "dMatrix")
 
   if(pp_mtd == "raw"){
     mtd_name <- "SPOTlight"
