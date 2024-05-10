@@ -77,15 +77,16 @@ class smdInfo:
         self.map_chains = pd.DataFrame()
         if 'map_chains' in mat:
             with h5.File(self.smdFile, 'r') as f:
-                for key in f['map_chains'].keys():
-                    dat = f['map_chains'][key][:]
-                    if key in ['cell-type', 'clu', 'dct', 'dcv']:
-                        dat = bytes2str(dat)
-                    elif key == 'domain':
-                        dat = bytes2tuple(dat)
-                    dat = pd.DataFrame(dat, columns=[key])
-                    self.map_chains = pd.concat([self.map_chains, dat], axis=1)
-            self.map_chains.index = self.map_chains['cell-type']
+                if 'cell-type' in f['map_chains'].keys():
+                    for key in f['map_chains'].keys():
+                        dat = f['map_chains'][key][:]
+                        if key in ['cell-type', 'clu', 'dct', 'dcv']:
+                            dat = bytes2str(dat)
+                        elif key == 'domain':
+                            dat = bytes2tuple(dat)
+                        dat = pd.DataFrame(dat, columns=[key])
+                        self.map_chains = pd.concat([self.map_chains, dat], axis=1)
+                    self.map_chains.index = self.map_chains['cell-type']
 
         # add configs
         self.configs = {}

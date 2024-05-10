@@ -178,6 +178,32 @@ def Ax_prop_domains(adata, clu_mtd, dcv_mtd, domains, cell_type, ax, title, f1sc
                       handlelength=0.7,
                       fontsize=12)
         ax.set_title(title)
+    elif platform == 'MERFISH':
+        adata.obs[cell_type] = prop
+        x, y = adata.obs['image_row'], -adata.obs['image_col']
+        pts = np.array([x[selection], y[selection]]).T
+        alpha = 60 / np.max(pts)
+        edges, centers = boundary_extract(pts, alpha, err=10e-5)
+        # ax.imshow(np.array(img), alpha=0.8)
+        ax.scatter(x=x, y=y, c=prop,
+                       cmap='cividis', marker='o', s=5)
+        lines = show_edge(edges, ax, label='F1score: %.3f' % f1score, linewidth=1.5)
+        ax.set_xticks(ticks=[])
+        ax.set_yticks(ticks=[])
+        ax.set_xlabel('')
+        ax.set_ylabel('')
+        ax.spines.top.set_visible(False)
+        ax.spines.bottom.set_visible(False)
+        ax.spines.left.set_visible(False)
+        ax.spines.right.set_visible(False)
+        ax.legend(loc='lower right',
+                      handletextpad=0.3,
+                      borderpad=0.5,
+                      borderaxespad=1.05,
+                      columnspacing=0.7,
+                      handlelength=0.7,
+                      fontsize=12)
+        ax.set_title(title)
     elif platform == 'ST':
         adata.obs[cell_type] = prop
         if imgPath is not None:

@@ -161,7 +161,7 @@ def suitable_location(adata, perf, clu, beta=1, greedy=2):
 
 def Despot_findgroups(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None):
     smdinfo = smdInfo(smdFile)
-    platform = smdinfo.configs['platform'][0]
+    platform = smdinfo.get_platform()
     spmats = smdinfo.get_spmatrix()
     if spmat_subset:
         spmats = list(set(spmats).intersection(spmat_subset))
@@ -184,7 +184,10 @@ def Despot_findgroups(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=N
                 mtd_name = "{0}+{1}+{2}".format(spmat, dcv, clu)
                 print("Finding Groups in the combination of {0}".format(mtd_name))
                 perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
-                perf = perf[perf['moransI'] > 0.5]
+                if platform in ['MERFISH', "Slide-seq"]:   # for single-cell resolution, the morans Index will divide 10
+                    perf = perf[perf['moransI'] > 0.05]
+                else:
+                    perf = perf[perf['moransI'] > 0.5]
                 BST = suitable_location(adata, perf, clu, beta, greedy)
                 Best_Fscore[mtd_name] = BST
     return Best_Fscore
@@ -207,7 +210,7 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
 
     # check the domains if we need to extend
     smdinfo = smdInfo(smdFile)
-    platform = smdinfo.configs['platform'][0]
+    platform = smdinfo.get_platform()
     for ct in Best_dict.keys():
         f1score, domains, mtd = Best_dict[ct]
         spmat, dcv, clu = mtd.split('+')
@@ -217,7 +220,10 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
         else:
             domain_list = [d for d in domains]
         perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
-        perf = perf[perf['moransI'] > 0.5]
+        if platform in ['MERFISH', "Slide-seq"]:  # for single-cell resolution, the morans Index will divide 10
+            perf = perf[perf['moransI'] > 0.05]
+        else:
+            perf = perf[perf['moransI'] > 0.5]
         spots = adata.obs['p_moransI_' + ct]
         clusters = adata.obs[clu]
         clu_num = np.unique(adata.obs[clu])
@@ -227,15 +233,15 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
         for i in clu_num:
             for cl in clu_num:
                 clu_spot = temp[clu] == cl
-                for i in domain_list:
-                    clu_spot += temp[clu] == i
+                for d in domain_list:
+                    clu_spot += temp[clu] == d
                 temp0 = temp[clu_spot]
                 precision = len(temp0[temp0['p_moransI_' + ct] == 1]) / len(temp0)
 
                 temp1 = temp[temp['p_moransI_' + ct] == 1]
                 clu_spot1 = temp1[clu] == cl
-                for i in domain_list:
-                    clu_spot1 += temp1[clu] == i
+                for d in domain_list:
+                    clu_spot1 += temp1[clu] == d
                 recall = len(temp1[clu_spot1]) / len(temp1)
                 if precision == 0 and recall == 0:
                     Fscore = 0
@@ -253,7 +259,8 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
                 break
         Best_dict[ct] = (f1score, tuple(domain_list), mtd)
 
-    Save_smd_from_BestDict(smdFile, Best_dict)
+    if len(Best_dict) > 0:
+        Save_smd_from_BestDict(smdFile, Best_dict)
     return Best_dict, Best_Fscore
 
 
@@ -462,7 +469,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     platform = smdinfo.get_platform()
     print("Platform: {0}".format(platform))
     # handle images
-    if smdinfo.get_platform() != 'ST':
+    if smdinfo.get_platform() not in ['ST', 'MERFISH']:
         img = Image.open(smdinfo.get_imgPath('low'))
         img0 = np.array(img) / 255
         img0[img0 > 1] = 1
@@ -478,7 +485,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         x -= xmin
         y -= ymin
         imgX, imgY = ogrid[0:(xmax - xmin), 0:(ymax - ymin)]
-    else:
+    elif smdinfo.get_platform() == "ST":
         img = Image.open(imgPath)
         img0 = np.array(img) / 255
         coords = smdinfo.get_coords()
@@ -490,6 +497,15 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         # x -= xmin
         # y -= ymin
         imgX, imgY = ogrid[0:img.height, 0:img.width]
+    else:
+        coords = smdinfo.get_coords()
+        x, y = coords.loc[:, 'image_row'], coords.loc[:, 'image_col']
+        xmin, xmax = int(np.min(x) - 30), int(np.max(x) + 30)
+        ymin, ymax = int(np.min(y) - 30), int(np.max(y) + 30)
+        x -= xmin
+        y -= ymin
+        imgX, imgY = ogrid[0:(xmax - xmin), 0:(ymax - ymin)]
+        w, h = xmax - xmin, ymax - ymin
 
     # handle the compared pipline or Despot
     # the full cell-types for SCSPs
@@ -600,11 +616,14 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
             zz = spot3D['Z'][item]
             ax1.plot([x, x], [y, y], [zz, 0], color=color, alpha=0.5, linewidth=1.25)
         show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
-    if smdinfo.get_platform() != 'ST':
+    if smdinfo.get_platform() == '10X Visium':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=10, cstride=10, facecolors=img0[xmin:xmax, ymin:ymax],
                      alpha=0.5, linewidth=0)
-    else:
+    elif smdinfo.get_platform() == 'ST':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=5, cstride=5, facecolors=img0,
+                         alpha=0.5, linewidth=0)
+    else:
+        ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=5, cstride=5,
                          alpha=0.5, linewidth=0)
     # ax1.scatter3D(spot3Dbg['X'], spot3Dbg['Y'], spot3Dbg['Z'], c='grey', label='background')
     ax1.set_xticks(ticks=range(w))
@@ -693,8 +712,6 @@ def Show_row_best_group(smdFile, folder, cell_types, file_name='domains1.svg', i
         os.makedirs(folder)
     smdinfo = smdInfo(smdFile)
     platform = smdinfo.get_platform()
-    if platform != 'ST':
-        platform = '10X_Visium'
     Best_df = smdinfo.get_map_chains()
     nct = len(cell_types)
     if platform == '10X_Visium':
@@ -724,7 +741,7 @@ def Show_row_best_group(smdFile, folder, cell_types, file_name='domains1.svg', i
             ret_dict['image_col'] = ret_props['image_col']
         ret_dict['lines'][cell_type] = ret_props['lines']
         ret_dict['props'][cell_type] = ret_props['prop']
-    figname = folder + "/"+file_name
+    figname = f"{folder}/{file_name}"
     fig.savefig(figname, dpi=400)
     return ret_dict
 
