@@ -255,22 +255,25 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   scmat <- h5read(H5adir, '/')
   if("raw" %in% attr(scmat, "names")){
     X <- scmat$raw$X
-    clsX <- class(X)
-    if(length(clsX)>1)
-      clsX <- clsX[1]
-    if(clsX!="list"){
-      X <- Matrix(X)
-      dat <- as(X, "CsparseMatrix")
-    }
     h5ad.var <- scmat$raw$var
   } else{
     X <- scmat$X
+    h5ad.var <- scmat$var
+  }
+  clsX <- class(X)
+  if(length(clsX)>1)
+    clsX <- clsX[1]
+  
+  if(clsX!="list"){
+    X <- Matrix(X)
+    dat <- as(X, "CsparseMatrix")
+  } else{
     dat <- sparseMatrix(i = X$indices[] + 1,
                         p = X$indptr[],
                         x = as.numeric(X$data[]),
                         repr = "C")
-    h5ad.var <- scmat$var
   }
+  
   h5ad.obs <- scmat$obs
   dims <- c(length(h5ad.var[["_index"]]), length(h5ad.obs[["_index"]]))
   dat@Dim <- dims

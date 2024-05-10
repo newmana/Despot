@@ -457,7 +457,7 @@ def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_typ
 
 
 # 3D landscape for SCSPs
-def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=0.1):
+def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=100, save=True, plot_edge=True):
     from mpl_toolkits.mplot3d import Axes3D
     from vsl.boundary import boundary_extract, show_edge
     from PIL import Image
@@ -467,9 +467,13 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     plt.rcParams["axes.unicode_minus"] = False
     smdinfo = smdInfo(smdFile)
     platform = smdinfo.get_platform()
-    print("Platform: {0}".format(platform))
+    print("=========3DLandscape Plotting==========")
+    print(f"smdFile: {smdFile}")
+    print(f"Platform: {platform}")
+    has_img = True
     # handle images
     if smdinfo.get_platform() not in ['ST', 'MERFISH']:
+        print(f"Image Path: {smdinfo.get_imgPath('low')}")
         img = Image.open(smdinfo.get_imgPath('low'))
         img0 = np.array(img) / 255
         img0[img0 > 1] = 1
@@ -486,6 +490,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         y -= ymin
         imgX, imgY = ogrid[0:(xmax - xmin), 0:(ymax - ymin)]
     elif smdinfo.get_platform() == "ST":
+        print(f"Image Path: {imgPath}")
         img = Image.open(imgPath)
         img0 = np.array(img) / 255
         coords = smdinfo.get_coords()
@@ -498,14 +503,16 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         # y -= ymin
         imgX, imgY = ogrid[0:img.height, 0:img.width]
     else:
+        print(f"No Image Path provided.")
         coords = smdinfo.get_coords()
-        x, y = coords.loc[:, 'image_row'], coords.loc[:, 'image_col']
+        x, y = coords.loc[:, 'image_row'], -coords.loc[:, 'image_col']
         xmin, xmax = int(np.min(x) - 30), int(np.max(x) + 30)
         ymin, ymax = int(np.min(y) - 30), int(np.max(y) + 30)
         x -= xmin
         y -= ymin
         imgX, imgY = ogrid[0:(xmax - xmin), 0:(ymax - ymin)]
         w, h = xmax - xmin, ymax - ymin
+        has_img = False
 
     # handle the compared pipline or Despot
     # the full cell-types for SCSPs
@@ -513,23 +520,23 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     full_ct.sort()
     if pipline is None:
         Best_df = smdinfo.get_map_chains()
-        figname = folder + '/landscape.svg'
+        figname = folder + '/landscape.png'
     else:
         Best_df = Pipline_findgroups(smdFile, pipline, beta=1, greedy=1)
         Best_df['dct'] = 'matrix'
         Best_df['dcv'] = pipline
         Best_df['clu'] = pipline
-        figname = folder + '/{0}.svg'.format(pipline)
+        figname = folder + '/{0}.png'.format(pipline)
     if cell_types is None:
         if len(Best_df) > 0:
             cell_types = list(Best_df.index)
-            print(cell_types)
         else:
             cell_types = []
     else:
         # select the overlaps of provided cell_types and existing cell_types
         cell_types = list(set(cell_types).intersection(list(Best_df.index)))
-
+    print(f"Cell Types: {cell_types}")
+    print(f"Mapping cell-type-specific domains...")  
     # arrange the cell_types
     spot3Ds = {}
     centroid = []
@@ -554,14 +561,34 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         for d in domain:
             selection += (np.array(idents) == d)
         selection = np.array(selection, dtype=bool)
+
+        # single-cell resolution has large scale elems, use downsampling to improve the performance
+        def retain_ones(bool_array, retain_percent=0.5):
+            bool_array = list(bool_array)
+            ones_count = bool_array.count(True)
+            ones_to_retain = int(ones_count * retain_percent)
+            ones_indices = [i for i, x in enumerate(bool_array) if x]
+            random.shuffle(ones_indices)
+            retained_indices = ones_indices[:ones_to_retain]
+            for i in range(len(bool_array)):
+                if i in retained_indices:
+                    bool_array[i] = True
+                else:
+                    bool_array[i] = False
+            return bool_array
+        
+        if(platform == 'MERFISH'):
+            selection = retain_ones(selection)
         spot3D = spot3D[selection]
         spot3Ds[cell_type] = spot3D
         # the closer cell-type has a lower layer
         center = (- spot3D['X'].min() + spot3D['Y'].max()) + 2 * (- spot3D['X'].mean() + spot3D['Y'].mean())
         centroid.append(center)
+    print(f"Arranging cell-type-specific domains...") 
     centroid = pd.DataFrame(centroid, index=cell_types)
 
     # plot the figure with Axes3D
+    print("Plotting domain edges and scatters...")
     fig = plt.figure(figsize=(15, 10))
     ax1 = plt.axes(projection='3d')
     arranged_types = centroid.sort_values(by=0)
@@ -576,7 +603,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         color = palette[full_ct.index(cell_type)]  # get the related cell-type color
         spot3D = spot3Ds[cell_type]
         if len(spot3D_layer) == 0:
-            z = 1
+            z = 1 if has_img else 0
             spot3D_layer[z] = [cell_type]
         else:
             need_new_layer = True   # if need new layer
@@ -596,7 +623,8 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
                 z = max(list(spot3D_layer.keys())) + 1
                 spot3D_layer[z] = [cell_type]
         pts = np.array(spot3D[['X', 'Y']])
-        edges, centers = boundary_extract(pts, alpha, err=10e-5)
+        alpha = alpha / np.max(pts)
+        edges, centers = boundary_extract(pts, alpha)
         spot3D['Z'] = np.ones_like(spot3D.index) * z
         if smdinfo.get_platform() == 'ST':
             s = 30
@@ -611,11 +639,13 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         else:
             sel_line = np.random.randint(len(spot3D.index), size=max(round(len(spot3D.index) / 20), 5))
         for item in sel_line:
-            x = spot3D['X'][item]
-            y = spot3D['Y'][item]
-            zz = spot3D['Z'][item]
+            x = spot3D['X'].iloc[item]
+            y = spot3D['Y'].iloc[item]
+            zz = spot3D['Z'].iloc[item]
             ax1.plot([x, x], [y, y], [zz, 0], color=color, alpha=0.5, linewidth=1.25)
-        show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
+        if plot_edge:
+            show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
+    print("Plotting surfaces...")
     if smdinfo.get_platform() == '10X Visium':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=10, cstride=10, facecolors=img0[xmin:xmax, ymin:ymax],
                      alpha=0.5, linewidth=0)
@@ -623,7 +653,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=5, cstride=5, facecolors=img0,
                          alpha=0.5, linewidth=0)
     else:
-        ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=5, cstride=5,
+        ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=100, cstride=100,
                          alpha=0.5, linewidth=0)
     # ax1.scatter3D(spot3Dbg['X'], spot3Dbg['Y'], spot3Dbg['Z'], c='grey', label='background')
     ax1.set_xticks(ticks=range(w))
@@ -638,7 +668,10 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
                columnspacing=0.7,
                handlelength=0.7,
                fontsize=14)
-    fig.savefig(figname, dpi=400)
+    if save:
+        print(f"Saving 3DLandscape to {figname}")
+        fig.savefig(figname, dpi=400)
+    print("=========3DLandscape Finished==========")
     return spot3Ds
 
 

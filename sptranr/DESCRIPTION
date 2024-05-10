@@ -3,10 +3,10 @@ Type: Package
 Title: What the Package Does (Title Case)
 Version: 0.1.0
 Author: rzh
-Maintainer: Zhihan Ruan <rrrzhan929@163.com>
+Maintainer: Zhihan Ruan <rrrzhan@mail.nankai.edu.cn>
 Description: An api package of `spt` file, which can transport data between
 Seurat(R), SingleCellExperiment(R), SpatialExperiment(R), Anndata(Python).
-And it's the base data structure of the pipline for Spatial Transcriptomics.
+And it's the base data structure of Despot.
 
 License: What license is it under?
 Encoding: UTF-8
