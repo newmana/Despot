@@ -314,20 +314,18 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
     }
   } else {
     for(name in attr(h5ad.var, "names")){
-      if(name!='_index')
-        if(class(h5ad.var[[name]]) == "list"){
-          var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
-        }else{
-          var[[name]] <- h5ad.var[[name]]
-        }
+      if(class(h5ad.var[[name]]) == "list"){
+        var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
+      }else{
+        var[[name]] <- h5ad.var[[name]]
+      }
     }
   }
   for(fea in attr(var, "names")){
     if(fea=="feature_name"){
       Create_smd_array1d(smdFile, as.character(var[[fea]]), "matrix/features/name", "character")
     } else{
-      Create_smd_array1d(smdFile, as.character(var[[fea]]),
-                         paste0("matrix/features/", fea), "character") 
+      Create_smd_array1d(smdFile, as.character(var[[fea]]),"matrix/features/name", "character") 
     }
   }
   
