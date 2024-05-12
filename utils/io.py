@@ -271,6 +271,9 @@ def bytes2str(arr):
 
 # convert str to bytes in array
 def str2bytes(arr):
+    if(isinstance(arr[0], float)):
+        arr = np.array(arr, dtype='int')
+        arr = np.array(arr, dtype='str')
     arr = np.array(list(map(lambda x: bytes(x, encoding='utf-8'), arr)))
     return arr
 

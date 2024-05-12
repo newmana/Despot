@@ -2,6 +2,7 @@ import esda
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pygeos
 from geopandas import GeoDataFrame
 import libpysal as lps
 from shapely.geometry import Point
@@ -261,7 +262,7 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
 
 def Pipline_findgroups(smdFile, pipline, beta=1, greedy=1):
     smdinfo = smdInfo(smdFile)
-    platform = smdinfo.configs['platform'][0]
+    platform = smdinfo.get_platform()
     spmat = 'matrix'
     clu_mtds = smdinfo.get_clu_methods(spmat)
     dcv_mtds = smdinfo.get_dcv_methods(spmat)

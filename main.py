@@ -1,7 +1,7 @@
 from utils.check import *
 print("Checking requirements...")
 Check_Environments()
-Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch"})
+Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch", "rtree", "geopandas", "esda"})
 print("Importing requirements...")
 import json
 import shutil
@@ -33,7 +33,7 @@ def Replicate_run(cfg:dict, iterations=1):
 if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
-        if cfg_name == 'MERFISH_10_0.json':
+        if cfg_name == 'Stereo-seq.json':
             cfg_path = 'configs/' + cfg_name
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")

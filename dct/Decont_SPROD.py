@@ -6,7 +6,7 @@ from utils.io import Load_smd_to_AnnData, Save_tsv_from_spData, Save_meta_from_s
 from utils.check import Check_Requirements
 
 
-def sprod_install():
+def sprod_install(pythonPath):
     print("Dependencies will be installed when Using SPROD for the first time.")
 
     # download SPROD handle python dependencies
@@ -15,19 +15,18 @@ def sprod_install():
         py_req = Check_Requirements({"anndata", "louvain", "numpy", "numba",
                                      "pandas", "python-igraph", "scanpy", "scipy", "scikit-learn", "torch"})
 
-        # install SpaGCN
+        # install SPROD
         download = os.system("git clone https://github.com/yunguan-wang/SPROD \n"
-                  "pip install SPROD \n"
-                  "python SPROD/test_examples.py")
+                  f"{pythonPath} SPROD/setup.py install --user")
 
         if download + py_req == 0:
-            print("sprod installed successfully.")
+            print("SPROD installed successfully.")
             return 0
         else:
-            print("sprod installation failed.")
+            print("SPROD installation failed.")
             exit(-1)
     else:
-        print("sprod has been installed correctly.")
+        print("SPROD has been installed correctly.")
         return 0
 
 
@@ -41,9 +40,7 @@ def sprod_pp(smdFile, tempdir='temps'):
 
 
 def sprod_run(sprod_dir, out_dir, pythonPath):
-    cmd = pythonPath + " SPROD/sprod.py " + sprod_dir + " " + out_dir
-    os.system("{0} SPROD/setup.py install --user \n"
-              "{1}".format(pythonPath, cmd))
+    os.system(f"{pythonPath} SPROD/sprod.py {sprod_dir} {out_dir}")
 
 
 def sprod_save(smdFile, out_dir):

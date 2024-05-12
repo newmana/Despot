@@ -1,5 +1,6 @@
 import subprocess
 import time
+import pkg_resources
 from utils.io import *
 from utils.preprocess import *
 from utils.geo import Despot_Find_bestGroup
@@ -162,7 +163,7 @@ def Pip_decont(smdFile, cfg, method='none', force=False, ):
     elif method == 'SPROD':
         print("Decontamination method: SPROD.")
         from dct.Decont_SPROD import sprod_install, sprod_pp, sprod_run, sprod_save
-        sprod_install()
+        sprod_install(cfg['pythonPath'])
         sprod_pp(smdFile, tempdir='temps')
         sprod_run(sprod_dir='temps', out_dir='temp_result', pythonPath=cfg['pythonPath'])
         sprod_save(smdFile, out_dir='temp_result')
