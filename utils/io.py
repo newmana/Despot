@@ -271,9 +271,9 @@ def bytes2str(arr):
 
 # convert str to bytes in array
 def str2bytes(arr):
-    if(isinstance(arr[0], float)):
+    if isinstance(arr[0], float):
         arr = np.array(arr, dtype='int')
-        arr = np.array(arr, dtype='str')
+    arr = np.array(arr, dtype='str')
     arr = np.array(list(map(lambda x: bytes(x, encoding='utf-8'), arr)))
     return arr
 
@@ -595,7 +595,7 @@ def Save_smd_from_leiden(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == np.array(f["barcodes"][:], dtype='str'))
+        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if h5data + '/idents/leiden' not in f:
             f.create_dataset(f"{h5data}/idents/leiden" , data=ident, dtype='int32')
         else:
@@ -618,7 +618,7 @@ def Save_smd_from_Squidpy_clu(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save Squidpy feature idents, which clustered by images
         ident = list(np.array(adata.obs['features_cluster'], dtype='int32'))
-        assert(len(ident) == np.array(f["barcodes"][:], dtype='str'))
+        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if f"{h5data}/idents/Squidpy" not in f:
             f.create_dataset(f"{h5data}/idents/Squidpy", data=ident, dtype='int32')
         else:
@@ -630,7 +630,7 @@ def Save_smd_from_SpaGCN_clu(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == np.array(f["barcodes"][:], dtype='str'))
+        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if f"{h5data}/idents/SpaGCN" not in f:
             f.create_dataset(f"{h5data}/idents/SpaGCN", data=ident, dtype='int32')
         else:
@@ -643,7 +643,7 @@ def Save_smd_from_SEDR(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == np.array(f["barcodes"][:], dtype='str'))
+        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if h5data + '/idents/SEDR' not in f:
             f.create_dataset(h5data + '/idents/SEDR', data=ident, dtype='int32')
         else:
@@ -656,7 +656,7 @@ def Save_smd_from_stlearn(smdFile, stdata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(stdata.obs['louvain'], dtype='int32'))
-        assert(len(ident) == np.array(f["barcodes"][:], dtype='str'))
+        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         f.create_dataset(h5data + '/idents/stlearn', data=ident, dtype='int32')
     print("Clustering with `stlearn` finished, idents saved in /" + h5data + '/idents/stlearn')
 

@@ -2,7 +2,6 @@ import esda
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pygeos
 from geopandas import GeoDataFrame
 import libpysal as lps
 from shapely.geometry import Point
