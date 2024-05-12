@@ -13,7 +13,7 @@ def sedr_install():
         print("Dependencies will be installed when Using SEDR for the first time.")
         # handle python dependencies
         py_req = Check_Requirements({"python-louvain", "scikit-learn", "bokeh", "matplotlib",
-                                     "torch-geometric", "torchvision",
+                                     "torch-geometric", "torchvision",'progress',
                                      "scikit-network", "imageio", "leidenalg", "umap-learn", "python-igraph"})
 
         py_ins = os.system("git clone -b v0.1.0 https://github.com/JinmiaoChenLab/SEDR.git")
@@ -24,8 +24,15 @@ def sedr_install():
             print("SEDR installation failed.")
             exit(-1)
     else:
-        print("SEDR has been installed correctly.")
-        return 0
+        py_req = Check_Requirements({"python-louvain", "scikit-learn", "bokeh", "matplotlib",
+                                "torch-geometric", "torchvision",'progress',
+                                "scikit-network", "imageio", "leidenalg", "umap-learn", "python-igraph"})
+        if py_req == 0:
+            print("SEDR installation succeeded.")
+            return 0
+        else:
+            print("SEDR installation failed.")
+            exit(-1)
 
 
 def sedr_run(adata, n_clusters=20):
