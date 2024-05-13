@@ -403,7 +403,7 @@ def Load_smd_to_AnnData(smdFile: str,
 
         # create deconv results
         if loadDeconv:
-            h5dcv = h5_obj[h5data + '/deconv']
+            h5dcv = h5_obj[f"{h5data}/deconv"]
             if len(h5dcv.keys()) > 0:
                 for dcv in h5dcv.keys():
                     shape = h5dcv[dcv]['shape']
@@ -411,6 +411,10 @@ def Load_smd_to_AnnData(smdFile: str,
                     barcodes = bytes2str(h5dcv[dcv]['barcodes'][:])
                     cell_type = bytes2str(h5dcv[dcv]['cell_type'][:])
                     w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
+                    if len(w) != len(obs_names):
+                        print(f"Warning::Cell Proportion Length from {h5data}/deconv/{dcv} is not matched with Barcodes.")
+                        w = w.reindex(obs_names, fill_value=0)
+                    
                     adata.obsm[dcv] = w
             print("Loading deconvolution data finished.")
 

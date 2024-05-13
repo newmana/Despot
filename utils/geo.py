@@ -468,7 +468,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     print(f"Platform: {platform}")
     has_img = True
     # handle images
-    if smdinfo.get_platform() not in ['ST', 'MERFISH']:
+    if smdinfo.get_platform() not in ['ST', 'MERFISH', 'Stereo-seq']:
         print(f"Image Path: {smdinfo.get_imgPath('low')}")
         img = Image.open(smdinfo.get_imgPath('low'))
         img0 = np.array(img) / 255
@@ -498,6 +498,17 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         # x -= xmin
         # y -= ymin
         imgX, imgY = ogrid[0:img.height, 0:img.width]
+    elif smdinfo.get_platform() == "MERFISH":
+        print(f"No Image Path provided.")
+        coords = smdinfo.get_coords()
+        x, y = coords.loc[:, 'image_row'], -coords.loc[:, 'image_col']
+        xmin, xmax = int(np.min(x) - 30), int(np.max(x) + 30)
+        ymin, ymax = int(np.min(y) - 30), int(np.max(y) + 30)
+        x -= xmin
+        y -= ymin
+        imgX, imgY = ogrid[0:(xmax - xmin), 0:(ymax - ymin)]
+        w, h = xmax - xmin, ymax - ymin
+        has_img = False
     else:
         print(f"No Image Path provided.")
         coords = smdinfo.get_coords()

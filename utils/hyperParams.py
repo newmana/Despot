@@ -4,6 +4,7 @@ def getMoranHP(platform:str) -> float:
     "ST": 0.5,
     "MERFISH": 0.05,
     "Slide-seq": 0.1,
+    "Stereo-seq":0.1,
     "osmFISH": 0.05,
   }
   return dict[platform]
