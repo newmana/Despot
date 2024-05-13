@@ -250,7 +250,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   }
   # Save platform
   Create_smd_array1d(smdFile, platform, "platform", "character")
-  
+
   # Load H5ad data to smdFile
   scmat <- h5read(H5adir, '/')
   if("raw" %in% attr(scmat, "names")){
@@ -263,7 +263,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   clsX <- class(X)
   if(length(clsX)>1)
     clsX <- clsX[1]
-  
+
   if(clsX!="list"){
     X <- Matrix(X)
     dat <- as(X, "CsparseMatrix")
@@ -273,7 +273,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
                         x = as.numeric(X$data[]),
                         repr = "C")
   }
-  
+
   h5ad.obs <- scmat$obs
   dims <- c(length(h5ad.var[["_index"]]), length(h5ad.obs[["_index"]]))
   dat@Dim <- dims
@@ -284,7 +284,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   Create_smd_array1d(smdFile, dat@i, "matrix/indices", "integer")
   Create_smd_array1d(smdFile, dat@p, "matrix/indptr", "integer")
   Create_smd_array1d(smdFile, dat@Dim, "matrix/shape", "integer")
-  
+
   # Load H5ad data groud_truth to smdFile
   if(ground_truth %in% attr(h5ad.obs, "names")){
     if("__categories" %in% attr(h5ad.obs, "names")){ # old anndata
@@ -295,7 +295,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
         }
     }else{ # new anndata
       if(class(h5ad.obs[[ground_truth]]) == "list"){
-        gt <- factor(h5ad.obs[[ground_truth]]$codes, labels = h5ad.obs[[ground_truth]]$categories)  
+        gt <- factor(h5ad.obs[[ground_truth]]$codes, labels = h5ad.obs[[ground_truth]]$categories)
       }else{
         gt <- h5ad.obs[[ground_truth]]
       }
@@ -303,7 +303,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
     gt <- as.character(gt)
     Create_smd_array1d(smdFile, gt, "matrix/idents/ground_truth", "character")
   }
-  
+
   # Load H5ad data features to smdFile
   var <- list()
   if("__categories" %in% attr(h5ad.var, "names")){ # old anndata
@@ -315,7 +315,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
   } else {
     for(name in attr(h5ad.var, "names")){
       if(class(h5ad.var[[name]]) == "list"){
-        var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
+        var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)
       }else{
         var[[name]] <- h5ad.var[[name]]
       }
@@ -325,10 +325,10 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
     if(fea=="feature_name"){
       Create_smd_array1d(smdFile, as.character(var[[fea]]), "matrix/features/name", "character")
     } else{
-      Create_smd_array1d(smdFile, as.character(var[[fea]]),"matrix/features/name", "character") 
+      Create_smd_array1d(smdFile, as.character(var[[fea]]),"matrix/features/name", "character")
     }
   }
-  
+
   # Load H5ad data coord to smdFile
   coord <- scmat$obsm$spatial
   Create_smd_array1d(smdFile, coord[1,], "sptimages/coordinates/row", "double")
@@ -514,6 +514,7 @@ Save_smd_from_Seurat <- function(smdFile, seu, h5data = 'matrix'){
                      arr = as.numeric(seu$seurat_clusters),
                      smdloc = smdloc,
                      mode = "integer")
+  print(paste0("Clustering with `Seurat` finished, Idents saved in /",h5data,'/idents/Seurat'))
 }
 
 
@@ -523,7 +524,7 @@ Save_smd_from_BayesSpace <-function (smdFile, Bayes,
   smdloc = paste0(h5data, '/idents/BayesSpace')
   # create `idents` in matrix
   Create_smd_array1d(smdFile,
-                     arr = Bayes@colData@listData$spatial.cluster,
+                     arr = Bayes$BayesSpace,
                      smdloc = smdloc,
                      mode = "integer")
 
@@ -769,7 +770,7 @@ Check_Load_BiocPackages <- function(pkgName){
 Load_smd_to_SE <- function(smdFile, h5data = 'matrix', platform="10X_Visium"){
   Check_Load_BiocPackages("DropletUtils")
   Check_Load_BiocPackages("SpatialExperiment")
-  
+
   # find if need to do subset
   datas <- strsplit(h5data, '/')[[1]]
   data0 <- datas[1]

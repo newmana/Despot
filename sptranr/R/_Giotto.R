@@ -14,17 +14,23 @@ Preprocess_Giotto <- function(gobj){
                               min_det_genes_per_cell = 0,
                               expression_values = c('raw'),
                               verbose = T)
-  gobj <- Giotto::normalizeGiotto(gobject = gobj, scalefactor = 6000, verbose = T)
+  gobj <- Giotto::normalizeGiotto(gobject = gobj, scalefactor = 6000, verbose = T, scale_genes = F, scale_cells = T)
   gobj <- Giotto::addStatistics(gobject = gobj)
   gobj <- createSpatialNetwork(gobject = gobj, minimum_k = 2, maximum_distance_delaunay = 400)
   gobj <- createSpatialNetwork(gobject = gobj, minimum_k = 2, method = 'kNN', k = 10)
-  gobj <- Giotto::calculateHVG(gobject = gobj)
+  gobj <- tryCatch({
+    Giotto::calculateHVG(gobject = gobj, expression_values = "scaled")
+  }, error = function(e){
+    print(e)
+    return(gobj)
+  })
   return(gobj)
 }
 
 Cluster_Giotto <- function(gobj){
   # runPCA
-  gobj <- Giotto::runPCA(gobject = gobj)
+  ncp <- ifelse(length(gobj@gene_ID) > 100, 100, length(gobj@gene_ID))
+  gobj <- Giotto::runPCA(gobject = gobj, ncp = ncp - 1, expression_values = "normalized", method = "factominer")
   gobj <- Giotto::runUMAP(gobj, dimensions_to_use = 1:10)
   gobj <- Giotto::createNearestNetwork(gobject = gobj, dimensions_to_use = 1:10, k = 15)
   gobj <- Giotto::doLeidenCluster(gobject = gobj, resolution = 0.4, n_iterations = 1000)

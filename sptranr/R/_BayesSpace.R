@@ -2,12 +2,19 @@ source("sptranr/R/_Loading.R")
 Check_Load_BiocPackages("BayesSpace")
 set.seed(1314)
 
-Cluster_BayesSpace <- function(Bayes){
-  Bayes <- scater::logNormCounts(Bayes)
-  Bayes <- spatialPreprocess(Bayes, platform="Visium",
-                             n.PCs=7, n.HVGs=2000, log.normalize=FALSE)
-  Bayes <- qTune(Bayes, qs=seq(2, 10), platform="Visium", d=10)
-  Bayes <- spatialCluster(Bayes, q=10, platform="Visium", d=10,
+Cluster_BayesSpace <- function(Bayes, platform){
+  Bayes <- quickPerCellQC(Bayes)
+  # Bayes <- tryCatch({scater::logNormCounts(Bayes)}, error=function(e){
+  #   clusters <- quickCluster(Bayes, method = "igraph")
+  #   Bayes <- computeSumFactors(Bayes)
+  #   Bayes <- scran::logNormCounts(Bayes)
+  #   return(Bayes)
+  # })
+  platform <- ifelse(platform == "ST", "ST", "Visium")
+  Bayes <- spatialPreprocess(Bayes, platform=platform,
+                             n.PCs=7, n.HVGs=2000, log.normalize=T)
+  # Bayes <- qTune(Bayes, qs=seq(2, 10), platform=platform, d=10)
+  Bayes <- spatialCluster(Bayes, q=10, platform=platform, d=10,
                           init.method="mclust", model="t", gamma=2,
                           nrep=1000, burn.in=100,
                           save.chain=TRUE)
@@ -15,7 +22,7 @@ Cluster_BayesSpace <- function(Bayes){
 }
 
 Enhance_BayesSpace <- function(Bayes){
-  Bayes.enhanced <- spatialEnhance(Bayes, q=10, platform="Visium", d=7,
+  Bayes.enhanced <- spatialEnhance(Bayes, q=10, platform=platform, d=7,
                                    model="t", gamma=2,
                                    jitter_prior=0.3, jitter_scale=3.5,
                                    nrep=1000, burn.in=100,

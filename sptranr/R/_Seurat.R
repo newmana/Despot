@@ -6,10 +6,21 @@ Check_Load_InstallPackages("Matrix")
 Check_Load_InstallPackages("Rcpp")
 
 Preprocess_Seurat <- function(seu, assay = "Spatial"){
-  seu <- SCTransform(seu, assay = assay,
-                         return.only.var.genes = FALSE, verbose = FALSE)
-  seu <- RunPCA(seu, assay = "SCT", verbose = FALSE)
-  return(seu)
+  seu <- tryCatch(expr = {
+    seu <- SCTransform(seu, assay = assay, return.only.var.genes = FALSE, verbose = FALSE)
+    seu <- RunPCA(seu, assay = "SCT", verbose = FALSE, features = VariableFeatures(seu))
+    return(seu)
+  }, error = function(e){
+    print(e)
+    print("Using LogNorm, FindVariableFeatures, Scale Pipline.")
+    seu <- NormalizeData(seu, normalization.method = "LogNormalize", scale.factor = 10000)
+    seu <- FindVariableFeatures(seu, selection.method = "vst")
+    seu <- ScaleData(seu)
+    seu <- RunPCA(seu, assay = assay, verbose = FALSE, features = VariableFeatures(seu))
+    ppAssay <- assay
+    return (seu)
+  })
+  return (seu)
 }
 
 Cluster_Seurat <- function(seu){
@@ -25,7 +36,13 @@ Estimation_Seurat <- function(seu){
 }
 
 Deconvolution_Seurat <- function(seu.sp, seu.sc){
-  anchors <- FindTransferAnchors(reference = seu.sc, query = seu.sp, normalization.method = "SCT")
+  anchors <- tryCatch({
+    FindTransferAnchors(reference = seu.sc, query = seu.sp, normalization.method = "SCT")
+  }, error = function(e){
+    print(e)
+    anchors <- FindTransferAnchors(reference = seu.sc, query = seu.sp, normalization.method = "LogNormalize")
+    return(anchors)
+  })
   predictions.assay <- TransferData(anchorset = anchors, refdata = seu.sc$orig.ident, prediction.assay = TRUE,
                                     weight.reduction = seu.sp[["pca"]], dims = 1:30)
   return(predictions.assay)

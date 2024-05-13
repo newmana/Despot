@@ -78,6 +78,7 @@ def sedr_run(adata, n_clusters=20):
     parser.add_argument('--device', type=str, default=device, help='Using GPU or not.')
     params = parser.parse_args(args=[])
     adata.var_names_make_unique()
+    params.cell_feat_dim = params.cell_feat_dim if adata.shape[1] > params.cell_feat_dim else adata.shape[1] - 1
     adata_X = adata_preprocess(adata, min_cells=5, pca_n_comps=params.cell_feat_dim)
     graph_dict = graph_construction(adata.obsm['spatial'], adata.shape[0], params)
     params.cell_num = adata.shape[0]

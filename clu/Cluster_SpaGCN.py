@@ -33,7 +33,7 @@ def Spatial_Cluster_Analysis_SpaGCN(adata):
     # Spatial Domain Detection Using SpaGCN
     spg.prefilter_genes(adata)
     spg.prefilter_specialgenes(adata)
-    sc.pp.normalize_per_cell(adata)
+    sc.pp.normalize_per_cell(adata, min_counts=0)
     sc.pp.log1p(adata)
     p = 0.5
     l = spg.search_l(p, adj)
@@ -42,7 +42,8 @@ def Spatial_Cluster_Analysis_SpaGCN(adata):
     random.seed(100)
     torch.manual_seed(100)
     np.random.seed(100)
-    clf.train(adata, adj)
+    pcs = 50 if adata.shape[1] > 50 else adata.shape[1] - 1
+    clf.train(adata, adj, num_pcs=pcs)
     pred, prob = clf.predict()
     adata.obs['clusters'] = pred
     adata.obs['clusters'] = adata.obs['clusters'].astype("category")

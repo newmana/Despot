@@ -33,7 +33,7 @@ def Replicate_run(cfg:dict, iterations=1):
 if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
-        if cfg_name == 'Stereo-seq.json':
+        if cfg_name == 'osmFISH.json':
             cfg_path = 'configs/' + cfg_name
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")
