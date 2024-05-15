@@ -1,7 +1,7 @@
 from utils.check import *
 print("Checking requirements...")
 Check_Environments()
-Check_Requirements({"anndata", "h5py","matplotlib", "numpy", "pandas", "scanpy", "scipy", "torch", "rtree", "geopandas", "esda"})
+Check_Requirements({"anndata", "h5py","matplotlib", "numpy","collections", "pandas", "scanpy", "scipy", "torch", "rtree", "geopandas", "esda"})
 print("Importing requirements...")
 import json
 import shutil

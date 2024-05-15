@@ -5,7 +5,9 @@ import anndata as ad
 import h5py as h5
 import json
 import os.path as osp
+from typing import Union, List
 from scipy.sparse import csc_matrix, csr_matrix
+
 
 # summary of a smdFile
 class smdInfo:
@@ -21,11 +23,11 @@ class smdInfo:
             if 'sptimages' in mat:
                 coord = f['sptimages']["coordinates"]
                 self.coords = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
-                                                'array_row': np.array(coord["row"][:], dtype='int32'),
-                                                'array_col': np.array(coord["col"][:], dtype='int32'),
-                                                'image_row': np.array(coord["imagerow"][:], dtype='int32'),
-                                                'image_col': np.array(coord["imagecol"][:], dtype='int32')},
-                                                index=bytes2str(coord["index"][:]))
+                                            'array_row': np.array(coord["row"][:], dtype='int32'),
+                                            'array_col': np.array(coord["col"][:], dtype='int32'),
+                                            'image_row': np.array(coord["imagerow"][:], dtype='int32'),
+                                            'image_col': np.array(coord["imagecol"][:], dtype='int32')},
+                                           index=bytes2str(coord["index"][:]))
                 self.coords.sort_index()
                 if 'scalefactors' in f['sptimages']:
                     sf = f['sptimages']["scalefactors"]
@@ -95,9 +97,9 @@ class smdInfo:
                 cfg = f["configs"]
                 for k in cfg.keys():
                     item = np.array(cfg[k], dtype='str')
-                    if item.shape == ():    # for only one item
+                    if item.shape == ():  # for only one item
                         item = item.item()
-                    else :     # for multi items
+                    else:  # for multi items
                         item = list(item)
                     self.configs[k] = item
 
@@ -110,6 +112,7 @@ class smdInfo:
         else:
             platform = self.configs['platform']
         return platform
+
     def get_clu_methods(self, spmat: str):
         if spmat == 'matrix':
             return self.spmatrixs[spmat]['cluster_methods']
@@ -173,7 +176,7 @@ class smdInfo:
 
 # save configs to smdFile
 def Save_smd_from_configs(smdFile, cfg_file="params.json", items: dict = None, change_cfg=False):
-    def get_item(items,k):
+    def get_item(items, k):
         item = items[k]
         if type(item) == str:
             if item == "":
@@ -280,7 +283,7 @@ def str2bytes(arr):
 
 def bytes2tuple(arr):
     arr = np.array(list(map(lambda x: tuple(x), arr)), dtype=object)
-    arr = np.array(list(map(lambda x: (0, ) if len(x) == 0 else x, arr)), dtype=object)
+    arr = np.array(list(map(lambda x: (0,) if len(x) == 0 else x, arr)), dtype=object)
     return arr
 
 
@@ -289,7 +292,7 @@ def tuple2bytes(arr):
     return arr
 
 
-def Load_smd_to_AnnData(smdFile: str,
+def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
                         h5data: str = "matrix",
                         hires: bool = False,
                         loadDeconv: bool = False,
@@ -316,22 +319,25 @@ def Load_smd_to_AnnData(smdFile: str,
         X = csc_matrix((data, indices, indptr), shape=shape, dtype=dtype).T
 
         # create obs and obsm
-        if platform == "ST":    # rotate anticlockwise 90 degrees for ST
+        coor_idx = bytes2str(coord["index"][:])
+        coor_idx = [b.upper() for b in coor_idx]
+        if platform == "ST":  # rotate anticlockwise 90 degrees for ST
             obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
                                 'array_row': np.array(coord["row"][:], dtype='int32'),
                                 'array_col': np.array(coord["col"][:], dtype='int32'),
                                 'image_row': np.array(-coord["imagecol"][:], dtype='int32'),
                                 'image_col': np.array(coord["imagerow"][:], dtype='int32')},
-                               index=bytes2str(coord["index"][:]))
+                               index=coor_idx)
         else:
             obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
                                 'array_row': np.array(coord["row"][:], dtype='int32'),
                                 'array_col': np.array(coord["col"][:], dtype='int32'),
                                 'image_row': np.array(coord["imagerow"][:], dtype='int32'),
                                 'image_col': np.array(coord["imagecol"][:], dtype='int32')},
-                               index=bytes2str(coord["index"][:]))
+                               index=coor_idx)
         obs = obs.sort_index()
         obs_names = bytes2str(h5dat['barcodes'][:])
+        obs_names = [b.upper() for b in obs_names]
         obs = obs.loc[obs_names, :]
 
         # load idents
@@ -342,7 +348,7 @@ def Load_smd_to_AnnData(smdFile: str,
             if str.isnumeric(idf[0]):
                 idf = np.array(idents[ident][:], dtype=int)
             # change idents to category
-            idf = pd.Series(idf, index=bytes2str(h5mat['barcodes'][:]), dtype='category')
+            idf = pd.Series(idf, index=obs_names, dtype='category')
             obs[ident] = idf.loc[obs_names]
         obsm = np.array([obs['image_col'], obs['image_row']])
         obsm = obsm.T
@@ -409,12 +415,13 @@ def Load_smd_to_AnnData(smdFile: str,
                     shape = h5dcv[dcv]['shape']
                     weights = np.array(h5dcv[dcv]['weights']).reshape(shape[1], shape[0]).T
                     barcodes = bytes2str(h5dcv[dcv]['barcodes'][:])
+                    barcodes = pd.Index([b.upper() for b in barcodes])
                     cell_type = bytes2str(h5dcv[dcv]['cell_type'][:])
                     w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
                     if len(w) != len(obs_names):
-                        print(f"Warning::Cell Proportion Length from {h5data}/deconv/{dcv} is not matched with Barcodes.")
-                        w = w.reindex(obs_names, fill_value=0)
-                    
+                        print(
+                            f"Warning::Cell Proportion Length from {h5data}/deconv/{dcv} is not matched with Barcodes.")
+                        w = w.reindex(pd.Index(obs_names), fill_value=0, axis=0)
                     adata.obsm[dcv] = w
             print("Loading deconvolution data finished.")
 
@@ -429,13 +436,33 @@ def Load_smd_to_AnnData(smdFile: str,
                     w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
                     adata.obsm[abd] = w
 
+        # checking replicate points
+        points = [xy for xy in zip(adata.obs['array_row'], adata.obs['array_col'])]
+        if len(set(points)) < len(points):
+            print("Warning::There are replicated points in coordinates, making short offset here.")
+            from collections import Counter
+            def find_duplicates_with_index(points, offset_unit=0.1):
+                counter = Counter(points)
+                duplicates = {item: [] for item, count in counter.items() if count > 1}
+                for index, item in enumerate(points):
+                    if item in counter and counter[item] > 1:
+                        duplicates[item].append(index)
+                for item in duplicates.keys():
+                    for index, point_id in enumerate(duplicates[item]):
+                        pt = points[point_id]
+                        points[point_id] = (pt[0] + index * offset_unit, pt[1] + index * offset_unit)
+                return np.array(points)
+
+            points_refine = find_duplicates_with_index(points, offset_unit=0.1)
+            adata.obs['array_row'], adata.obs['array_col'] = points_refine[:, 0] / 10, points_refine[:, 1] / 10
+
     # making var and obs unique
     adata.var_names_make_unique()
     adata.obs_names_make_unique()
     return adata
 
 
-def Load_smd_sc_to_AnnData(smdFile:str, h5data='scRNA_seq') -> ad.AnnData:
+def Load_smd_sc_to_AnnData(smdFile: str, h5data='scRNA_seq') -> ad.AnnData:
     h5_obj = h5.File(smdFile, 'r')
     # the scRNA-seq Data is saved in 'scRNA_seq', using Sparse Matrix
     scRNA_seq = h5_obj[h5data]
@@ -514,7 +541,7 @@ def Load_smd_to_Benchmark(smdFile, h5data, mode: str = "cluster"):
 
 
 # Save subset under existing h5datas
-def Save_smd_from_Subset(smdFile:str, h5data:str, subset_name:str, refer_idx=None, force=False):
+def Save_smd_from_Subset(smdFile: str, h5data: str, subset_name: str, refer_idx=None, force=False):
     # if it's required to save a reference to existing h5data, using ref_idx to select the subset.
     if refer_idx is not None:
         if type(refer_idx[0] == str):
@@ -575,9 +602,9 @@ def Save_meta_from_spData(out_dir, spdata, sample_name, filename='spt_meta.tsv')
         diameter = spdata.uns['spatial'][sample_name]['scalefactors']['spot_diameter_fullres']
     else:
         diameter = 100
-    diameters = pd.DataFrame(np.repeat(diameter/2, len(meta)), columns=['Spot_radius'], index=meta.index)
+    diameters = pd.DataFrame(np.repeat(diameter / 2, len(meta)), columns=['Spot_radius'], index=meta.index)
     opth_meta = osp.join(out_dir, filename)
-    meta = pd.concat([meta,diameters], axis=1)
+    meta = pd.concat([meta, diameters], axis=1)
     meta.to_csv(opth_meta, header=True, index=True, index_label="Barcodes")
     return
 
@@ -599,9 +626,9 @@ def Save_smd_from_leiden(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if h5data + '/idents/leiden' not in f:
-            f.create_dataset(f"{h5data}/idents/leiden" , data=ident, dtype='int32')
+            f.create_dataset(f"{h5data}/idents/leiden", data=ident, dtype='int32')
         else:
             del f[h5data + '/idents/leiden']
             f.create_dataset(f"{h5data}/idents/leiden", data=ident, dtype='int32')
@@ -622,7 +649,7 @@ def Save_smd_from_Squidpy_clu(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save Squidpy feature idents, which clustered by images
         ident = list(np.array(adata.obs['features_cluster'], dtype='int32'))
-        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if f"{h5data}/idents/Squidpy" not in f:
             f.create_dataset(f"{h5data}/idents/Squidpy", data=ident, dtype='int32')
         else:
@@ -634,7 +661,7 @@ def Save_smd_from_SpaGCN_clu(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if f"{h5data}/idents/SpaGCN" not in f:
             f.create_dataset(f"{h5data}/idents/SpaGCN", data=ident, dtype='int32')
         else:
@@ -647,7 +674,7 @@ def Save_smd_from_SEDR(smdFile, adata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(adata.obs['clusters'], dtype='int32'))
-        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         if h5data + '/idents/SEDR' not in f:
             f.create_dataset(h5data + '/idents/SEDR', data=ident, dtype='int32')
         else:
@@ -660,7 +687,7 @@ def Save_smd_from_stlearn(smdFile, stdata, h5data='matrix'):
     with h5.File(smdFile, 'a') as f:
         # save idents
         ident = list(np.array(stdata.obs['louvain'], dtype='int32'))
-        assert(len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
         f.create_dataset(h5data + '/idents/stlearn', data=ident, dtype='int32')
     print("Clustering with `stlearn` finished, idents saved in /" + h5data + '/idents/stlearn')
 

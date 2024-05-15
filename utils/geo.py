@@ -13,6 +13,7 @@ from vsl.visualization import Show_intersection_genes, Show_matched_domains, Sho
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics import normalized_mutual_info_score
 from scipy.stats import hypergeom
+from collections import Counter
 from statistics import mean, stdev
 from math import sqrt
 import networkx as nx
