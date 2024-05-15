@@ -25,7 +25,7 @@ def p_moransI_purity(adata, dcv_mtd: str, clu: str):
     geometry = [Point(xy) for xy in zip(adata.obs['array_row'], adata.obs['array_col'])]
     # first calculate global moransI
     ad_gdf = GeoDataFrame(adata.obsm[dcv_mtd], geometry=geometry, copy=True)
-    wq = lps.weights.Queen.from_dataframe(ad_gdf)
+    wq = lps.weights.Queen.from_dataframe(ad_gdf, use_index=True)
     wq.transform = 'r'
     perf = pd.DataFrame(columns=['moransI', 'ARI', 'NMI', 'purity'])
     for i in range(len(adata.obsm[dcv_mtd].columns) - 1):
@@ -469,7 +469,7 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     print(f"Platform: {platform}")
     has_img = True
     # handle images
-    if smdinfo.get_platform() not in ['ST', 'MERFISH', 'Stereo-seq']:
+    if smdinfo.get_platform() not in ['ST', 'MERFISH', 'Stereo-seq', 'osmFISH']:
         print(f"Image Path: {smdinfo.get_imgPath('low')}")
         img = Image.open(smdinfo.get_imgPath('low'))
         img0 = np.array(img) / 255
@@ -653,12 +653,15 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
             ax1.plot([x, x], [y, y], [zz, 0], color=color, alpha=0.5, linewidth=1.25)
         if plot_edge:
             show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
-    print("Plotting surfaces...")
+    print(f"Plotting surfaces using {smdinfo.get_platform()}...")
     if smdinfo.get_platform() == '10X Visium':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=10, cstride=10, facecolors=img0[xmin:xmax, ymin:ymax],
                      alpha=0.5, linewidth=0)
     elif smdinfo.get_platform() == 'ST':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=5, cstride=5, facecolors=img0,
+                         alpha=0.5, linewidth=0)
+    elif smdinfo.get_platform() == 'osmFISH':
+        ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=10000, cstride=10000,
                          alpha=0.5, linewidth=0)
     else:
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=100, cstride=100,
@@ -852,7 +855,7 @@ def Despot_self_correlation(smdFile, alpha=1, method='pearsonr'):
             geometry = [Point(xy) for xy in zip(adata.obs['array_row'], adata.obs['array_col'])]
             # first calculate global moransI
             ad_gdf = GeoDataFrame(adata.obsm[dcv], geometry=geometry, copy=True)
-            wq = lps.weights.Queen.from_dataframe(ad_gdf)
+            wq = lps.weights.Queen.from_dataframe(ad_gdf, use_index=True)
             wq.transform = 'r'
             # we combine the cell enrichment with the neighbor plot
             comp = pd.DataFrame(adata.obsm[dcv])

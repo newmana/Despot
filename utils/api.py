@@ -1,6 +1,7 @@
 import subprocess
 import time
 import pkg_resources
+from typing import Union, List
 from utils.io import *
 from utils.preprocess import *
 from utils.geo import Despot_Find_bestGroup
@@ -390,7 +391,7 @@ def Despot_Deconv(smdFile, cfg=None, force=False):
 
 
 # do deconvolution for certain subset
-def Despot_SubsetDeconv(smdFile, h5data="matrix", clu_mtd=None, domain=None):
+def Despot_SubsetDeconv(smdFile, h5data="matrix", clu_mtd=None, domain=None) -> None:
     adata = Load_smd_to_AnnData(smdFile, h5data)
     adata_sub = adata[adata.obs[clu_mtd] == domain]
     idx = list(adata_sub.obs_names)
@@ -400,5 +401,14 @@ def Despot_SubsetDeconv(smdFile, h5data="matrix", clu_mtd=None, domain=None):
     Despot_Deconv(smdFile)
 
 
-def Despot_Ensemble(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None):
+def Despot_Ensemble(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None) -> None:
     Despot_Find_bestGroup(smdFile, beta, greedy, spmat_subset, clu_subset, dcv_subset)
+
+
+def Despot_Embedding(smdFile: Union[str, List[str]], cfg: Union[None, dict]=None) -> None:
+    sptinfo = smdInfo(smdFile)
+    h5datas = Create_h5datas(cfg)
+    for h5data in h5datas:
+        adata = Load_smd_to_AnnData(smdFile, h5data)
+        # embedding by harmony and hpca
+        ...

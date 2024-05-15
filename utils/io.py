@@ -5,6 +5,7 @@ import anndata as ad
 import h5py as h5
 import json
 import os.path as osp
+from anndata.utils import make_index_unique
 from typing import Union, List
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -300,165 +301,182 @@ def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
                         platform: str = '10X_Visium',
                         dtype='float32') -> ad.AnnData:
     # use h5py to load origin info
-    with h5.File(smdFile, 'r') as h5_obj:
-        h5mat = h5_obj['matrix']
-        h5img = h5_obj["sptimages"]
-        coord = h5img["coordinates"]
-        sf = h5img["scalefactors"]
+    if isinstance(smdFile, str):
+        smdFiles = [smdFile]
+    else:
+        smdFiles = smdFile
+    adatas = []
+    batchNames = []
+    for smdFile in smdFiles:
+        with h5.File(smdFile, 'r') as h5_obj:
+            h5mat = h5_obj['matrix']
+            h5img = h5_obj["sptimages"]
+            coord = h5img["coordinates"]
+            sf = h5img["scalefactors"]
 
-        # select the active data, default 'matrix'
-        datas = h5data.split('/')
-        data0 = datas[0]
-        h5dat = h5_obj[data0]
+            # select the active data, default 'matrix'
+            datas = h5data.split('/')
+            data0 = datas[0]
+            h5dat = h5_obj[data0]
 
-        # create X in AnnData, including data, indices, indptr, shape
-        data = h5dat['data']
-        indices = h5dat['indices']
-        indptr = h5dat['indptr']
-        shape = h5dat['shape']
-        X = csc_matrix((data, indices, indptr), shape=shape, dtype=dtype).T
+            # create X in AnnData, including data, indices, indptr, shape
+            data = h5dat['data']
+            indices = h5dat['indices']
+            indptr = h5dat['indptr']
+            shape = h5dat['shape']
+            X = csc_matrix((data, indices, indptr), shape=shape, dtype=dtype).T
 
-        # create obs and obsm
-        coor_idx = bytes2str(coord["index"][:])
-        coor_idx = [b.upper() for b in coor_idx]
-        if platform == "ST":  # rotate anticlockwise 90 degrees for ST
-            obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
-                                'array_row': np.array(coord["row"][:], dtype='int32'),
-                                'array_col': np.array(coord["col"][:], dtype='int32'),
-                                'image_row': np.array(-coord["imagecol"][:], dtype='int32'),
-                                'image_col': np.array(coord["imagerow"][:], dtype='int32')},
-                               index=coor_idx)
-        else:
-            obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
-                                'array_row': np.array(coord["row"][:], dtype='int32'),
-                                'array_col': np.array(coord["col"][:], dtype='int32'),
-                                'image_row': np.array(coord["imagerow"][:], dtype='int32'),
-                                'image_col': np.array(coord["imagecol"][:], dtype='int32')},
-                               index=coor_idx)
-        obs = obs.sort_index()
-        obs_names = bytes2str(h5dat['barcodes'][:])
-        obs_names = [b.upper() for b in obs_names]
-        obs = obs.loc[obs_names, :]
+            # create obs and obsm
+            coor_idx = bytes2str(coord["index"][:])
+            coor_idx = [b.upper() for b in coor_idx]
+            if platform == "ST":  # rotate anticlockwise 90 degrees for ST
+                obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
+                                    'array_row': np.array(coord["row"][:], dtype='int32'),
+                                    'array_col': np.array(coord["col"][:], dtype='int32'),
+                                    'image_row': np.array(-coord["imagecol"][:], dtype='int32'),
+                                    'image_col': np.array(coord["imagerow"][:], dtype='int32')},
+                                   index=coor_idx)
+            else:
+                obs = pd.DataFrame({'in_tissue': np.array(coord["tissue"][:], dtype='int32'),
+                                    'array_row': np.array(coord["row"][:], dtype='int32'),
+                                    'array_col': np.array(coord["col"][:], dtype='int32'),
+                                    'image_row': np.array(coord["imagerow"][:], dtype='int32'),
+                                    'image_col': np.array(coord["imagecol"][:], dtype='int32')},
+                                   index=coor_idx)
+            obs = obs.sort_index()
+            obs_names = bytes2str(h5dat['barcodes'][:])
+            obs_names = [b.upper() for b in obs_names]
+            obs = obs.loc[obs_names, :]
 
-        # load idents
-        idents = h5dat['idents']
-        for ident in idents.keys():
-            # change idents' datatype if they are numeric
-            idf = np.array(idents[ident][:], dtype='str')
-            if str.isnumeric(idf[0]):
-                idf = np.array(idents[ident][:], dtype=int)
-            # change idents to category
-            idf = pd.Series(idf, index=obs_names, dtype='category')
-            obs[ident] = idf.loc[obs_names]
-        obsm = np.array([obs['image_col'], obs['image_row']])
-        obsm = obsm.T
+            # load idents
+            idents = h5dat['idents']
+            for ident in idents.keys():
+                # change idents' datatype if they are numeric
+                idf = np.array(idents[ident][:], dtype='str')
+                if str.isnumeric(idf[0]):
+                    idf = np.array(idents[ident][:], dtype=int)
+                # change idents to category
+                idf = pd.Series(idf, index=obs_names, dtype='category')
+                obs[ident] = idf.loc[obs_names]
+            obsm = np.array([obs['image_col'], obs['image_row']])
+            obsm = obsm.T
 
-        # create var
-        if data0 != "matrix":  # which means Decont data exists
-            h5fea = bytes2str(h5dat['features']['name'][:])
-            h5fea = [fea.upper() for fea in h5fea]
-            var = pd.DataFrame({'gene_name': h5fea}, index=h5fea)
-        else:
-            # var = pd.DataFrame({'gene_ids': np.array(features["id"][:], dtype='str'),
-            #                     'feature_types': np.array(features['feature_type'][:], dtype='str'),
-            #                     'genome': np.array(features['genome'][:], dtype='str'),
-            #                     'gene_name': np.array(features['name'][:], dtype='str')})
-            # var.index = var['gene_ids']
-            h5fea = bytes2str(h5dat['features']['name'][:])
-            h5fea = [fea.upper() for fea in h5fea]
-            var = pd.DataFrame({'gene_name': h5fea}, index=h5fea)
-        name = str(h5_obj["name"][0], encoding='utf8')
+            # create var
+            if data0 != "matrix":  # which means Decont data exists
+                h5fea = bytes2str(h5dat['features']['name'][:])
+                h5fea = [fea.upper() for fea in h5fea]
+                var = pd.DataFrame({'gene_name': h5fea}, index=h5fea)
+            else:
+                # var = pd.DataFrame({'gene_ids': np.array(features["id"][:], dtype='str'),
+                #                     'feature_types': np.array(features['feature_type'][:], dtype='str'),
+                #                     'genome': np.array(features['genome'][:], dtype='str'),
+                #                     'gene_name': np.array(features['name'][:], dtype='str')})
+                # var.index = var['gene_ids']
+                h5fea = bytes2str(h5dat['features']['name'][:])
+                h5fea = [fea.upper() for fea in h5fea]
+                var = pd.DataFrame({'gene_name': h5fea}, index=h5fea)
+            name = str(h5_obj["name"][0], encoding='utf8')
 
-        adata = ad.AnnData(X, obs=obs, var=var)
-        adata.obs_names = obs_names
-        adata.obsm['spatial'] = obsm
-        print("Loading Gene expression finished.")
-        # create Images
-        if loadImg and 'lowres' in h5img:
-            adata.uns['spatial'] = {name: {
-                'images': {'lowres': h5img['lowres'][:].T},
-                'scalefactors': {'spot_diameter_fullres': sf['spot'][0],
-                                 'tissue_hires_scalef': sf['hires'][0],
-                                 'fiducial_diameter_fullres': sf['fiducial'][0],
-                                 'tissue_lowres_scalef': sf['lowres'][0], },
-                'metadata': {}
-            }}
-            if hires and 'hires' in h5img:
-                adata.uns['spatial'][name]['images']['hires'] = h5img['hires'][:].T
+            adata = ad.AnnData(X, obs=obs, var=var)
+            adata.obs_names = obs_names
+            adata.obsm['spatial'] = obsm
+            print("Loading Gene expression finished.")
+            # create Images
+            if loadImg and 'lowres' in h5img:
+                adata.uns['spatial'] = {name: {
+                    'images': {'lowres': h5img['lowres'][:].T},
+                    'scalefactors': {'spot_diameter_fullres': sf['spot'][0],
+                                     'tissue_hires_scalef': sf['hires'][0],
+                                     'fiducial_diameter_fullres': sf['fiducial'][0],
+                                     'tissue_lowres_scalef': sf['lowres'][0], },
+                    'metadata': {}
+                }}
+                if hires and 'hires' in h5img:
+                    adata.uns['spatial'][name]['images']['hires'] = h5img['hires'][:].T
 
-            print("Loading spatial images finished.")
-        # create svgs
-        if 'is_HVG' in h5dat['features']:
-            h5svg = h5dat['features']['is_HVG']
-            HVGS = {}
-            if len(h5svg) > 0:
-                for svg in h5svg.keys():
-                    HVG = pd.DataFrame()
-                    if svg == "BayesSpace" or svg == "leiden":
-                        pass
-                    else:
-                        for elem in h5svg[svg].keys():
-                            HVG = pd.concat([HVG, pd.Series(h5svg[svg][elem], name=elem)], axis=1)
-                    HVGS[svg] = HVG
-            adata.uns["HVGs"] = HVGS
+                print("Loading spatial images finished.")
+            # create svgs
+            if 'is_HVG' in h5dat['features']:
+                h5svg = h5dat['features']['is_HVG']
+                HVGS = {}
+                if len(h5svg) > 0:
+                    for svg in h5svg.keys():
+                        HVG = pd.DataFrame()
+                        if svg == "BayesSpace" or svg == "leiden":
+                            pass
+                        else:
+                            for elem in h5svg[svg].keys():
+                                HVG = pd.concat([HVG, pd.Series(h5svg[svg][elem], name=elem)], axis=1)
+                        HVGS[svg] = HVG
+                adata.uns["HVGs"] = HVGS
 
-        # whether you need to do subset
-        if len(datas) > 1:
-            subarcodes = bytes2str(h5_obj[h5data + '/barcodes'][:])
-            adata = adata[subarcodes]
+            # whether you need to do subset
+            if len(datas) > 1:
+                subarcodes = bytes2str(h5_obj[h5data + '/barcodes'][:])
+                adata = adata[subarcodes]
 
-        # create deconv results
-        if loadDeconv:
-            h5dcv = h5_obj[f"{h5data}/deconv"]
-            if len(h5dcv.keys()) > 0:
-                for dcv in h5dcv.keys():
-                    shape = h5dcv[dcv]['shape']
-                    weights = np.array(h5dcv[dcv]['weights']).reshape(shape[1], shape[0]).T
-                    barcodes = bytes2str(h5dcv[dcv]['barcodes'][:])
-                    barcodes = pd.Index([b.upper() for b in barcodes])
-                    cell_type = bytes2str(h5dcv[dcv]['cell_type'][:])
-                    w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
-                    if len(w) != len(obs_names):
-                        print(
-                            f"Warning::Cell Proportion Length from {h5data}/deconv/{dcv} is not matched with Barcodes.")
-                        w = w.reindex(pd.Index(obs_names), fill_value=0, axis=0)
-                    adata.obsm[dcv] = w
-            print("Loading deconvolution data finished.")
+            # create deconv results
+            if loadDeconv:
+                h5dcv = h5_obj[f"{h5data}/deconv"]
+                if len(h5dcv.keys()) > 0:
+                    for dcv in h5dcv.keys():
+                        shape = h5dcv[dcv]['shape']
+                        weights = np.array(h5dcv[dcv]['weights']).reshape(shape[1], shape[0]).T
+                        barcodes = bytes2str(h5dcv[dcv]['barcodes'][:])
+                        barcodes = pd.Index([b.upper() for b in barcodes])
+                        cell_type = bytes2str(h5dcv[dcv]['cell_type'][:])
+                        w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
+                        if len(w) != len(obs_names):
+                            print(
+                                f"Warning::Cell Proportion Length from {h5data}/deconv/{dcv} is not matched with Barcodes.")
+                            w = w.reindex(pd.Index(obs_names), fill_value=0, axis=0)
+                        adata.obsm[dcv] = w
+                print("Loading deconvolution data finished.")
 
-        if 'abundance' in h5dat.keys():
-            h5abd = h5dat['abundance']
-            if len(h5abd.keys()) > 0:
-                for abd in h5abd.keys():
-                    shape = h5abd[abd]['shape']
-                    weights = np.array(h5abd[abd]['weights']).reshape(shape[1], shape[0]).T
-                    barcodes = bytes2str(h5abd[abd]['barcodes'][:])
-                    cell_type = bytes2str(h5abd[abd]['cell_type'][:])
-                    w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
-                    adata.obsm[abd] = w
+            if 'abundance' in h5dat.keys():
+                h5abd = h5dat['abundance']
+                if len(h5abd.keys()) > 0:
+                    for abd in h5abd.keys():
+                        shape = h5abd[abd]['shape']
+                        weights = np.array(h5abd[abd]['weights']).reshape(shape[1], shape[0]).T
+                        barcodes = bytes2str(h5abd[abd]['barcodes'][:])
+                        cell_type = bytes2str(h5abd[abd]['cell_type'][:])
+                        w = pd.DataFrame(weights, index=barcodes, columns=cell_type)
+                        adata.obsm[abd] = w
 
-        # checking replicate points
-        points = [xy for xy in zip(adata.obs['array_row'], adata.obs['array_col'])]
-        if len(set(points)) < len(points):
-            print("Warning::There are replicated points in coordinates, making short offset here.")
-            from collections import Counter
-            def find_duplicates_with_index(points, offset_unit=0.1):
-                counter = Counter(points)
-                duplicates = {item: [] for item, count in counter.items() if count > 1}
-                for index, item in enumerate(points):
-                    if item in counter and counter[item] > 1:
-                        duplicates[item].append(index)
-                for item in duplicates.keys():
-                    for index, point_id in enumerate(duplicates[item]):
-                        pt = points[point_id]
-                        points[point_id] = (pt[0] + index * offset_unit, pt[1] + index * offset_unit)
-                return np.array(points)
+            # checking replicate points
+            points = [xy for xy in zip(adata.obs['array_row'], adata.obs['array_col'])]
+            if len(set(points)) < len(points):
+                print("Warning::There are replicated points in coordinates, making short offset here.")
+                from collections import Counter
+                def find_duplicates_with_index(points, offset_unit=0.1):
+                    counter = Counter(points)
+                    duplicates = {item: [] for item, count in counter.items() if count > 1}
+                    for index, item in enumerate(points):
+                        if item in counter and counter[item] > 1:
+                            duplicates[item].append(index)
+                    for item in duplicates.keys():
+                        for index, point_id in enumerate(duplicates[item]):
+                            pt = points[point_id]
+                            points[point_id] = (pt[0] + index * offset_unit, pt[1] + index * offset_unit)
+                    return np.array(points)
 
-            points_refine = find_duplicates_with_index(points, offset_unit=0.1)
-            adata.obs['array_row'], adata.obs['array_col'] = points_refine[:, 0] / 10, points_refine[:, 1] / 10
+                points_refine = find_duplicates_with_index(points, offset_unit=0.1)
+                adata.obs['array_row'], adata.obs['array_col'] = points_refine[:, 0] / 10, points_refine[:, 1] / 10
 
-    # making var and obs unique
-    adata.var_names_make_unique()
-    adata.obs_names_make_unique()
+            # add batch name
+            batchNames.append(np.array(h5_obj['name'][:], dtype=str)[0])
+
+        # making var and obs unique
+        adata.var_names_make_unique()
+        adata.obs_names_make_unique()
+        adatas.append(adata)
+
+    if len(adatas) > 1:
+        batchNames = make_index_unique(pd.Index(batchNames), join='-')
+        adata = adatas[0].concatenate(*adatas[1:], batch_categories=batchNames)
+    else:
+        adata = adatas[0]
     return adata
 
 
