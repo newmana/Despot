@@ -27,8 +27,8 @@ Deconvolution_CARD <- function(spe, sce){
                            ct.varname = 'cellType',
                            ct.select = unique(sc_meta$cellType),
                            sample.varname = "sampleInfo",
-                           minCountSpot = 5,
-                           minCountGene = 0)
+                           minCountSpot = 0,
+                           minCountGene = 5)
 
   card <- CARD_deconvolution(card)
   return(card@Proportion_CARD)

@@ -62,30 +62,38 @@ def Pip_benchmark(smdFile, h5data):
     benchmarks.to_csv("temps/151673_" + h5data + ".csv", index=True, header=True)
 
 
-def Create_h5datas(cfg):
-    h5datas = []
+def Create_h5datas(cfg: Union[dict, List[dict]]) -> List[str]:
     # whether you need Decontamination
-    Decont = cfg['Decontamination']
-    smdFile = cfg['smdFile']
-    if type(Decont) != list:
-        Decont = [Decont]
-    with h5.File(smdFile, 'r') as f:
-        for dec in Decont:
-            if dec == "SpotClean":
-                h5data = 'SpotClean_mat'
-            elif dec == "SPCS":
-                h5data = "SPCS_mat"
-            elif dec == "SPROD":
-                h5data = "SPROD_mat"
-            elif dec == "none":
-                h5data = "matrix"
+    if isinstance(cfg, dict):
+        cfgs = [cfg]
+    all_h5datas = []
+    for i,c in enumerate(cfgs):
+        h5datas = []
+        Decont = c['Decontamination']
+        smdFile = c['smdFile']
+        if type(Decont) != list:
+            Decont = [Decont]
+        with h5.File(smdFile, 'r') as f:
+            for dec in Decont:
+                if dec == "SpotClean":
+                    h5data = 'SpotClean_mat'
+                elif dec == "SPCS":
+                    h5data = "SPCS_mat"
+                elif dec == "SPROD":
+                    h5data = "SPROD_mat"
+                elif dec == "none":
+                    h5data = "matrix"
+                else:
+                    h5data = dec
+                if h5data in f:
+                    h5datas.append(h5data)
+                else:
+                    print("{0} can't be found in smdFile.".format(h5data))
+            if i==0:
+                all_h5datas.extend(h5datas)
             else:
-                h5data = dec
-            if h5data in f:
-                h5datas.append(h5data)
-            else:
-                print("{0} can't be found in smdFile.".format(h5data))
-    return h5datas
+                all_h5datas = list(set(all_h5datas).intersection(h5datas))
+    return all_h5datas
 
 
 def Despot_Estimate(smdFile, cfg, force=False):
@@ -405,10 +413,11 @@ def Despot_Ensemble(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=Non
     Despot_Find_bestGroup(smdFile, beta, greedy, spmat_subset, clu_subset, dcv_subset)
 
 
-def Despot_Embedding(smdFile: Union[str, List[str]], cfg: Union[None, dict]=None) -> None:
-    sptinfo = smdInfo(smdFile)
+def Despot_Embedding(smdFile: Union[str, List[str]], cfg: Union[dict, List[dict]]) -> None:
+    from ebd.Embed_Harmony import Embed_Harmony
     h5datas = Create_h5datas(cfg)
     for h5data in h5datas:
         adata = Load_smd_to_AnnData(smdFile, h5data)
         # embedding by harmony and hpca
-        ...
+        adata = Embed_Harmony(adata)
+        Save_smd_from_Harmony(smdFiles=smdFile, adata=adata, h5data=h5data, name="Harmony")

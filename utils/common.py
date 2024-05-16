@@ -17,7 +17,6 @@ from pathlib import Path
 import os.path as osp
 import datetime
 import re
-import loompy as lp
 from scipy.sparse import csc_matrix, csr_matrix
 from sklearn.metrics import mean_squared_error
 plt.rcParams['font.sans-serif'] = ['Arial']

@@ -37,6 +37,7 @@ class smdInfo:
                                              'tissue_hires_scalef': sf['hires'][0],
                                              'fiducial_diameter_fullres': sf['fiducial'][0],
                                              'tissue_lowres_scalef': sf['lowres'][0]}
+            
 
         # add origin matrix
         self.spmatrixs = {}
@@ -52,7 +53,9 @@ class smdInfo:
         if 'scRNA_seq' in mat:
             self.scmatrixs.append('scRNA_seq')
 
-        # for each spmatrix, add clu_methods and dcv_methods, load idents and proportions
+        # add reductions
+        self.reduction = {}
+        # for each spmatrix, add clu_methods and dcv_methods, load idents, proportions, and reductions(TODO)
         with h5.File(self.smdFile, 'r') as f:
             coord = f["sptimages"]["coordinates"]
             for keys in self.spmatrixs.keys():
@@ -297,6 +300,7 @@ def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
                         h5data: str = "matrix",
                         hires: bool = False,
                         loadDeconv: bool = False,
+                        loadReduction: bool = False,
                         loadImg: bool = True,
                         platform: str = '10X_Visium',
                         dtype='float32') -> ad.AnnData:
@@ -432,6 +436,18 @@ def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
                             w = w.reindex(pd.Index(obs_names), fill_value=0, axis=0)
                         adata.obsm[dcv] = w
                 print("Loading deconvolution data finished.")
+            
+            if loadReduction and f"{h5data}/reduction" in h5_obj:
+                h5red = h5_obj[f"{h5data}/reduction"]
+                if len(h5red.keys()) > 0:
+                    for red in h5red.keys():
+                        assert (isinstance(h5red[red], h5.Group))
+                        for ebd in h5red[red].keys():
+                            shape = h5red[red][ebd]['shape']
+                            weights = np.array(h5red[red][ebd]['weights']).reshape(shape[1], shape[0])
+                            assert len(weights) == len(obs_names), f"Length of weights({len(weights)}) is not matched with obs_names({len(obs_names)})"
+                            adata.obsm[f"{red}_{ebd}"] = weights
+                print("Loading reduction data finished.")   
 
             if 'abundance' in h5dat.keys():
                 h5abd = h5dat['abundance']
@@ -477,6 +493,7 @@ def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
         adata = adatas[0].concatenate(*adatas[1:], batch_categories=batchNames)
     else:
         adata = adatas[0]
+    adata.uns['smdFiles'] = dict(zip(batchNames, smdFiles))
     return adata
 
 
@@ -955,3 +972,44 @@ def Save_smd_from_BestDict(smdFile, Best_dict: dict):
                 f.create_dataset("map_chains/" + cols, data=tuple2bytes(dat))
             else:
                 f.create_dataset("map_chains/" + cols, data=dat)
+
+
+def recursive_delete(group):
+    for key in list(group.keys()):
+        item = group[key]
+        if isinstance(item, h5.Group):
+            recursive_delete(item)
+        else:
+            del group[key]
+
+
+def Save_smd_from_Harmony(smdFiles, adata, h5data='matrix', name='Harmony'):
+  for smd in smdFiles:
+    with h5.File(smd, 'a') as f:
+      # check reduction in smdFile
+      if f"{h5data}/reduction/" not in f:
+        f.create_group(f"{h5data}/reduction/")
+      # check reduction/Harmony in f
+      if f"{h5data}/reduction/{name}" not in f:
+        f.create_group(f"{h5data}/reduction/{name}")
+        print(f"{h5data}/reduction/{name}/ created.")
+      else:
+        recursive_delete(f[f"{h5data}/reduction/{name}"])
+        print(f"{h5data}/reduction/{name}/ covered.")
+      adata_sub = adata[adata.obs['batch'] == adata.uns['smdFiles'][smd]]
+      embed_key = {
+         'X_pca_harmony': 'PCA',
+         'X_umap': "UMAP",
+         'X_tsne': "TSNE",
+      }
+      for _obsm in embed_key.keys():
+        coef = adata_sub.obsm[_obsm]
+        weights = np.array(coef).flatten()
+        shape = [coef.shape[1], coef.shape[0]]
+        assert (shape[1] == len(adata_sub.obs_names))
+        if f"{h5data}/reduction/{name}/{embed_key[_obsm]}" not in f:
+          f.create_group(f"{h5data}/reduction/{name}/{embed_key[_obsm]}/")
+        print(f"{h5data}/reduction/{name}/{embed_key[_obsm]}/ created.")
+        f.create_dataset(f"{h5data}/reduction/{name}/{embed_key[_obsm]}/weights", data=weights)
+        f.create_dataset(f"{h5data}/reduction/{name}/{embed_key[_obsm]}/shape", data=shape)
+      print(f"Embedding with `Harmony` finished, Reductions saved at {h5data}/reduction/{name}/ in {smd}")
