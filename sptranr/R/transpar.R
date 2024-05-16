@@ -517,6 +517,25 @@ Save_smd_from_Seurat <- function(smdFile, seu, h5data = 'matrix'){
   print(paste0("Clustering with `Seurat` finished, Idents saved in /",h5data,'/idents/Seurat'))
 }
 
+Save_smd_from_BASS <- function(smdFile, BASS, h5data = 'matrix'){
+  
+  smdloc_c = paste0(h5data, '/idents/BASS_c')
+  # create `idents` in matrix
+  Create_smd_array1d(smdFile,
+                     arr = as.numeric(BASS@results$init_c),
+                     smdloc = smdloc_c,
+                     mode = "integer")
+  print(paste0("Clustering with `BASS` finished, Idents saved in /",h5data,'/idents/BASS_c'))
+  
+  smdloc_z = paste0(h5data, '/idents/BASS_z')
+  # create `idents` in matrix
+  Create_smd_array1d(smdFile,
+                     arr = as.numeric(BASS@results$init_z),
+                     smdloc = smdloc_z,
+                     mode = "integer")
+  print(paste0("Clustering with `BASS` finished, Idents saved in /",h5data,'/idents/BASS_z'))
+}
+
 
 Save_smd_from_BayesSpace <-function (smdFile, Bayes,
                                      save.enhanced = F, h5data = 'matrix'){
