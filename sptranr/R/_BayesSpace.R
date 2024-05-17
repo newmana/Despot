@@ -3,7 +3,6 @@ Check_Load_BiocPackages("BayesSpace")
 set.seed(1314)
 
 Cluster_BayesSpace <- function(Bayes, platform){
-  Bayes <- quickPerCellQC(Bayes)
   # Bayes <- tryCatch({scater::logNormCounts(Bayes)}, error=function(e){
   #   clusters <- quickCluster(Bayes, method = "igraph")
   #   Bayes <- computeSumFactors(Bayes)
