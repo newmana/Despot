@@ -183,7 +183,7 @@ def Pip_decont(smdFile, cfg, method='none', force=False, ):
 
 # we provide 7 inline methods for clustering and supports Squidpy and Giotto
 def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
-    method_list = ['leiden', 'SpaGCN', 'stlearn', 'Seurat', 'BayesSpace', 'Giotto', 'Squidpy', 'SEDR']
+    method_list = ['leiden', 'SpaGCN', 'stlearn', 'Seurat', 'BayesSpace', 'Giotto', 'Squidpy', 'SEDR', 'MENDER', "BASS"]
     platform = cfg['platform']
     hires = cfg['load_hires']
     with h5.File(smdFile, 'r') as f:
@@ -201,6 +201,15 @@ def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
         adata = Spatial_Cluster_Analysis(adata)
         Save_smd_from_leiden(smdFile, adata, h5data)
         # adata = Differential_Expression_Analysis(adata)
+    elif method == 'MENDER':
+        from clu.Cluster_MENDER import MENDER_install, Spatial_Cluster_MENDER
+        MENDER_install()
+        adata = Load_smd_to_AnnData(smdFile, h5data)
+        adata = Remove_mito_genes(adata)
+        adata = Filter_genes(adata)
+        adata = Spatial_Cluster_MENDER(adata)
+        Save_smd_from_leiden(smdFile, adata, h5data)
+        Save_smd_from_MENDER(smdFile, adata, h5data)
     elif method == 'SpaGCN':
         from clu.Cluster_SpaGCN import spagcn_install
         spagcn_install()
@@ -219,6 +228,9 @@ def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
     elif method == 'BayesSpace':
         # Using R scripts
         os.system("Rscript clu/Cluster_BayesSpace.R")
+    elif method == 'BASS':
+        # Using R scripts
+        os.system("Rscript clu/Cluster_BASS.R")
     elif method == "Seurat":
         # Using R scripts
         os.system("Rscript clu/Cluster_Seurat.R")

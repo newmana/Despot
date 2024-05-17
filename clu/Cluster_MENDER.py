@@ -1,11 +1,28 @@
-import MENDER
-import scanpy as sc
-import pandas as pd
-import numpy as np
-from sklearn.metrics import *
+import pkg_resources
+from utils.check import Check_Requirements
+import subprocess
+from utils.common import *
 
-# Using leiden to do dimension reduction and clustering
-def Spatial_Cluster_MENDER(adata, n_top_genes=2000, n_comps=50):
+
+def MENDER_install():
+    package = "MENDER"
+    print(f"Dependencies will be installed when Using {package} for the first time.")
+    # download SPROD handle python dependencies
+    if "somender" not in {pkg.key for pkg in pkg_resources.working_set}:
+        # handle python dependencies
+        py_req = Check_Requirements({"louvain", "scikit-image", "numpy", "igraph", "scikit-learn", "umap-learn"})
+        python = sys.executable
+        py_ins = subprocess.check_call([python, '-m', 'pip', 'install', "SOMENDER"], stdout=subprocess.DEVNULL)
+        if py_ins+py_req == 0:
+            print(f"{package} installation succeeded.")
+            return 0
+        else:
+            print(f"{package} installation failed.")
+            exit(-1)
+
+
+def Spatial_Cluster_MENDER(adata, n_comps=50):
+    import MENDER
     sc.pp.normalize_total(adata, inplace=True)
     sc.pp.log1p(adata)
     sc.pp.highly_variable_genes(adata, flavor='seurat', inplace=True)
@@ -24,29 +41,14 @@ def Spatial_Cluster_MENDER(adata, n_top_genes=2000, n_comps=50):
         adata,
         # determine which cell state to use
         # we use the cell state got by Leiden
-        ct_obs='ct'
+        ct_obs='clusters'
     )
     msm.estimate_radius()
     # set the MENDER parameters
 
-    msm.set_MENDER_para(
-        # default of n_scales is 6
-        n_scales=scale,
-
-        # for single cell data, nn_mode is set to 'radius'
-        nn_mode='radius',
-
-        # default of n_scales is 15 um (see the manuscript for why).
-        # MENDER also provide a function 'estimate_radius' for estimating the radius
-        # this para in 3D might be smaller than 2D
-        nn_para=7,
-
-    )
+    msm.set_MENDER_para(n_scales=scale, nn_mode='radius',nn_para=10)
     # construct the context representation
-    msm.run_representation(
-
-        # the number of processings
-    )
+    msm.run_representation()
 
     # set the spatial clustering parameter
     # positive values for the expected number of domains

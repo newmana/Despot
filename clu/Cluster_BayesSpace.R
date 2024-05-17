@@ -5,6 +5,7 @@
 
 source("sptranr/R/transpar.R")
 source("sptranr/R/_BayesSpace.R")
+library(scuttle)
 params <- fromJSON(file = "params.json")
 smdFile <- params$smdFile
 platform <- params$platform
@@ -20,6 +21,7 @@ for(decont in params$Decontamination){
   }
   Bayes <- Load_smd_to_SCE(smdFile, h5data = h5data)
   Bayes_col <- colnames(Bayes)
+  Bayes <- scuttle::quickPerCellQC(Bayes)
   Bayes <- Cluster_BayesSpace(Bayes, platform)
   res <- data.frame(BayesSpace=Bayes@colData@listData$spatial.cluster, row=colnames(Bayes))
   res_reindexed <- tidyr::complete(res, row=Bayes_col, fill = list(BayesSpace=0))

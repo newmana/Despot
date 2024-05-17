@@ -676,6 +676,17 @@ def Save_smd_from_leiden(smdFile, adata, h5data='matrix'):
         # f.create_dataset(h5data + '/features/is_HVG/leiden', data=list(fg), dtype='bool')
 
 
+def Save_smd_from_MENDER(smdFile, adata, h5data='matrix'):
+    with h5.File(smdFile, 'a') as f:
+        ident = list(np.array(adata.obs['MENDER'], dtype='int32'))
+        assert (len(ident) == len(np.array(f[f"{h5data}/barcodes"][:], dtype='str')))
+        if f"{h5data}/idents/MENDER" not in f:
+            f.create_dataset(f"{h5data}/idents/MENDER", data=ident, dtype='int32')
+        else:
+            del f[f"{h5data}/idents/MENDER"]
+            f.create_dataset(f"{h5data}/idents/MENDER", data=ident, dtype='int32')
+    print(f"Clustering with `MENDER` finished, idents saved in /{h5data}/idents/MENDER")
+
 def Save_smd_from_Squidpy_clu(smdFile, adata, h5data='matrix'):
     # h5_obj = h5.File(smdFile, 'r')
     # fullgenes = np.array(h5_obj[h5data]['features']['name'][:], dtype='str')
