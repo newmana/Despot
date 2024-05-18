@@ -21,6 +21,6 @@
   "load_fullres": false,
   "fullres_path": "",
   "Decontamination": ["none","SPCS","SpotClean", "SPROD"],
-  "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "stlearn", "SEDR"],
+  "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "stlearn", "SEDR", "MENDER", "BASS"],
   "Deconvolution": ["CARD","Seurat","Giotto","Cell2Location","SPOTlight", "SPOTlight_es", "SPOTlight_vae","spacexr", "spacexr_es", "StereoScope", "StereoScope_es"]
 }

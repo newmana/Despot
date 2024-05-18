@@ -68,4 +68,5 @@ Save_smd_from_CARD <- function(smdFile, h5data, card, pp_mtd="raw"){
                      arr = colnames(results),
                      smdloc = paste0(h5data, '/deconv/', mtd_name ,'/cell_type'),
                      mode = 'character')
+  print(paste0("Deconvolution with `CARD` finished, idents saved in /", h5data, '/deconv/CARD'))
 }

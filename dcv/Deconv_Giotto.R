@@ -9,7 +9,7 @@ python_path <- params$pythonPath
 temp_dir <- params$tempdir
 
 sce <- Load_smdsc_to_SCE(smdFile, h5data = "scRNA_seq")
-sce <- Analysis_scRNA_seq(sce)
+
 sce0 <- sce[sce@metadata$HVGs, ]
 Sig <- aggregate(data.frame(t(as.matrix(sce0@assays@data$logcounts))), by=list(sce0$free_annotation), FUN=mean)
 rownames(Sig) <- Sig[[1]]

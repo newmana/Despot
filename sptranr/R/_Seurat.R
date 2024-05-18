@@ -79,6 +79,7 @@ Save_smd_from_Seurat.dcv <- function(smdFile, h5data, predictions.assay){
                      arr = colnames(results),
                      smdloc = paste0(h5data, '/deconv/Seurat/cell_type'),
                      mode = 'character')
+  print(paste0("Deconvolution with `Seurat` finished, idents saved in /", h5data, '/deconv/Seurat'))
 }
 
 scQC <- function(seu,lg=100,hg=100000,lm=-Inf,hm=0.1){

@@ -75,7 +75,7 @@ def Make_References(smdFile, count_size=3000,
         print("Calculate examples for {0}".format(type))
         zidx = np.where(scdata.obs['annotation'] == type)[0]
         dataset = scdataset[zidx, :]
-        dataset = torch.from_numpy(np.array(dataset))
+        dataset = torch.from_numpy(np.array(dataset, dtype='float32'))
         batch_size = len(dataset)
         data_loader = Data.DataLoader(dataset=dataset,
                                       batch_size=batch_size,

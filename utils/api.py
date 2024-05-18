@@ -193,6 +193,10 @@ def Pip_cluster(smdFile, cfg, h5data, method='leiden', force=False, tif=None):
         if (h5data + '/idents/' + method in f) and (force == False):
             print("Clustering with " + method + " has done, skip it.")
             return
+        if method == "BASS":
+            if (f"{h5data}/idents/BASS_c" in f) and (force == False) and (f"{h5data}/idents/BASS_z" in f):
+                print(f"Clustering with {method} has done, skip it.")
+                return
     if method == 'leiden':
         from clu.Cluster_leiden import Spatial_Cluster_Analysis
         adata = Load_smd_to_AnnData(smdFile, h5data)
@@ -390,7 +394,9 @@ def Despot_Deconv(smdFile, cfg=None, force=False):
             print("Found scRNA_seq data in smdFile.")
     if do_scRNA_seq:
         print("Using scRNA-seq provided by users...")
-        os.system("Rscript sc/Generate_scRNA-seq.R")
+        state = subprocess.check_call(["Rscript", "sc/Generate_scRNA-seq.R"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if state == 0:
+            print("Generating scRNA-seq data finished.")
     # whether need Decontamination
     h5datas = Create_h5datas(cfg)
 

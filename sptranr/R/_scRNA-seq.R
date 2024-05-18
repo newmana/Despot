@@ -34,22 +34,14 @@ Analysis_scRNA_seq <- function(sce, top.HVGs = 3000){
   colLabels(sce) <- colData(sce)$free_annotation
   # store highly variable genes in sce
   sce@metadata[["HVGs"]] <- hvg
-
-  # Get the marker genes
-  mgs <- scoreMarkers(sce)
+  genes <- !grepl("^Rp[l|s]|Mt", rownames(sce))
+  # find marker genes
+  options(matrixStats.useNames.NA = "deprecated")
+  mgs <- scoreMarkers(sce, group=colData(sce)$free_annotation, subset.row = genes)
   mgs_ls <- lapply(names(mgs), function(i){
     x <- mgs[[i]]
     # Filter and keep relevant marker genes, those with AUC > 0.8
-    AUC.thresh <- 0.8
-    while (AUC.thresh > 0){
-      if (sum(x$mean.AUC > AUC.thresh) > 0){
-        x <- x[x$mean.AUC > AUC.thresh, ]
-        break
-      }else{
-        AUC.thresh <- AUC.thresh - 0.1
-      }
-    }
-
+    x <- x[x$mean.AUC > 0.8, ]
     # Sort the genes from highest to lowest weight
     x <- x[order(x$mean.AUC, decreasing = TRUE), ]
     # Add gene and cluster id to the dataframe
@@ -154,7 +146,7 @@ Save_scRNAseq_to_smd <- function(smdFile, sce){
 
   # create DataSets for matrix
   mat <- sce@assays@data@listData$counts
-  mat <- Matrix(mat, nrow = dim(mat)[1], ncol = dim(mat)[2], dimnames = dimnames(mat))
+  mat <- Matrix(mat, dimnames = dimnames(mat))
 
   # save 1d weights
   Create_smd_array1d(smdFile,
@@ -270,7 +262,8 @@ Load_smdsc_to_SCE <- function(smdFile, h5data = "scRNA_seq"){
                        free_annotation = h5_obj$idents$annotation)
   se <- SummarizedExperiment(assays = list(counts = dat),
                              rowData = DataFrame(gene_name = toupper(h5_obj$features$name)),
-                             colData = colData)
+                             colData = colData,
+                             metadata = list(HVGs = h5_obj$features$HVGs))
   sce <- as(se, "SingleCellExperiment")
   colnames(sce) <- h5_obj$barcodes
   rownames(sce) <- toupper(h5_obj$features$name)
@@ -435,7 +428,7 @@ Load_h5adsc_to_SCE <- function(scmat, scgnm = NA){
     h5ad.var <- scmat$var
   }
   # generate factors using categories
-  
+
   var <- list()
   if("__categories" %in% attr(h5ad.var, "names")){ # old anndata
     for(name in attr(h5ad.var[["__categories"]], "names")){
@@ -447,7 +440,7 @@ Load_h5adsc_to_SCE <- function(scmat, scgnm = NA){
     for(name in attr(h5ad.var, "names")){
       if(name!='_index')
         if(class(var[[name]]) == "list"){
-          var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)  
+          var[[name]] <- factor(h5ad.var[[name]]$codes, labels = h5ad.var[[name]]$categories)
         }else{
           var[[name]] <- h5ad.var[[name]]
         }
@@ -464,7 +457,7 @@ Load_h5adsc_to_SCE <- function(scmat, scgnm = NA){
     for(name in attr(h5ad.obs, "names")){
       if(name!='_index')
         if(class(h5ad.obs[[name]]) == "list"){
-          obs[[name]] <- factor(h5ad.obs[[name]]$codes, labels = h5ad.obs[[name]]$categories)  
+          obs[[name]] <- factor(h5ad.obs[[name]]$codes, labels = h5ad.obs[[name]]$categories)
         }else{
           obs[[name]] <- h5ad.obs[[name]]
         }

@@ -518,7 +518,7 @@ Save_smd_from_Seurat <- function(smdFile, seu, h5data = 'matrix'){
 }
 
 Save_smd_from_BASS <- function(smdFile, BASS, h5data = 'matrix'){
-  
+
   smdloc_c = paste0(h5data, '/idents/BASS_c')
   # create `idents` in matrix
   Create_smd_array1d(smdFile,
@@ -526,7 +526,7 @@ Save_smd_from_BASS <- function(smdFile, BASS, h5data = 'matrix'){
                      smdloc = smdloc_c,
                      mode = "integer")
   print(paste0("Clustering with `BASS` finished, Idents saved in /",h5data,'/idents/BASS_c'))
-  
+
   smdloc_z = paste0(h5data, '/idents/BASS_z')
   # create `idents` in matrix
   Create_smd_array1d(smdFile,
@@ -646,7 +646,7 @@ Save_smd_from_Giotto_dcv <- function(smdFile, gobj, h5data = 'matrix'){
   result <- result[, -1]
   cell_type <- colnames(result)
   result <- as.matrix(result)
-  result <- as(result, "dgeMatrix")
+  result <- as(result, "dMatrix")
   h5createGroup(smdFile, paste0(h5data, '/deconv/Giotto'))
 
   # save 1d weights
@@ -668,7 +668,7 @@ Save_smd_from_Giotto_dcv <- function(smdFile, gobj, h5data = 'matrix'){
                      arr = cell_type,
                      smdloc = paste0(h5data, '/deconv/Giotto/cell_type'),
                      mode = 'character')
-
+  print(paste0("Deconvolution with `Giotto` finished, idents saved in /", h5data, '/deconv/Giotto'))
 }
 
 # smd to SingleCellExperiment object
