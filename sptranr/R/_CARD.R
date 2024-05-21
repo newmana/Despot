@@ -37,7 +37,7 @@ Deconvolution_CARD <- function(spe, sce){
 # save smd from CARD results
 Save_smd_from_CARD <- function(smdFile, h5data, card, pp_mtd="raw"){
 
-  results <- as(card, "dMatrix")
+  results <- as(card, "unpackedMatrix")
 
   if(pp_mtd == "raw"){
     mtd_name <- "CARD"

@@ -404,7 +404,7 @@ def Despot_Deconv(smdFile, cfg=None, force=False):
     f = open("log.txt", 'a')
     for method in methods:
         for h5data in h5datas:
-            if h5data == "SPROD_mat" and method == "Cell2Location":
+            if h5data != "matrix" and method == "Cell2Location":
                 print("Denoising by SPROD doesn't follow the GammaPoisson suppose in "
                       "Cell2Location, skip it.")
                 continue

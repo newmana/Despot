@@ -646,7 +646,7 @@ Save_smd_from_Giotto_dcv <- function(smdFile, gobj, h5data = 'matrix'){
   result <- result[, -1]
   cell_type <- colnames(result)
   result <- as.matrix(result)
-  result <- as(result, "dMatrix")
+  result <- as(result, "unpackedMatrix")
   h5createGroup(smdFile, paste0(h5data, '/deconv/Giotto'))
 
   # save 1d weights

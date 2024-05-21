@@ -33,7 +33,7 @@ def Replicate_run(cfg:dict, iterations=1):
 if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
-        if cfg_name == 'CID4971.json':
+        if cfg_name == 'V1_mouse_brain.json':
             cfg_path = 'configs/' + cfg_name
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")
@@ -51,7 +51,7 @@ if __name__ == "__main__":
             # set venv
             cfg["venv"] = sys.prefix.split('/')[-1]
             smdFile0 = cfg['smdFile']
-            for i in range(6,10):
+            for i in range(5):
                 name = cfg['name']
                 platform = cfg['platform']
                 cfg['smdFile'] = f"{smdFile0.split('.')[0]}-{i}.h5smd"
