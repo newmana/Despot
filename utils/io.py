@@ -493,7 +493,7 @@ def Load_smd_to_AnnData(smdFile: Union[str, List[str]],
         adata = adatas[0].concatenate(*adatas[1:], batch_categories=batchNames)
     else:
         adata = adatas[0]
-    adata.uns['smdFiles'] = dict(zip(batchNames, smdFiles))
+    adata.uns['smdFiles'] = dict(zip(smdFiles, batchNames))
     return adata
 
 

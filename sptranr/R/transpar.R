@@ -55,7 +55,6 @@ Save_cfg_to_smd <- function(smdFile, params){
   # create group `configs`
   rhdf5::h5createGroup(smdFile, "configs")
   for(par in names(params)){
-    print(class(params[[par]]))
     Create_smd_array1d(smdFile, params[[par]], paste0("configs/", par), class(params[[par]]))
   }
   message("Configs are Loaded.")
@@ -325,7 +324,7 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
     if(fea=="feature_name"){
       Create_smd_array1d(smdFile, as.character(var[[fea]]), "matrix/features/name", "character")
     } else{
-      Create_smd_array1d(smdFile, as.character(var[[fea]]),"matrix/features/name", "character")
+      Create_smd_array1d(smdFile, as.character(var[[fea]]),paste0("matrix/features/", fea), "character")
     }
   }
 
