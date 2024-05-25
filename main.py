@@ -19,7 +19,7 @@ if __name__ == "__main__":
     cfg_list = os.listdir('configs')
     for cfg_name in cfg_list:
         if cfg_name == 'V1_mouse_brain.json':
-            cfg_path = 'configs/' + cfg_name
+            cfg_path = f'configs/{cfg_name}'
             shutil.copy(cfg_path, dst="params.json")
             cfg = Load_json_configs("params.json")
 
@@ -44,7 +44,6 @@ if __name__ == "__main__":
                 smdFile = cfg['smdFile']
                 # set running configs
                 Save_json_configs(cfg, "params.json")
-                Save_smd_from_configs(smdFile, items=cfg)
                 # need hires?
                 hires = cfg['load_hires']
                 print(f"=========Despot {i} Info============")
@@ -54,6 +53,7 @@ if __name__ == "__main__":
                 print("Using hires img: {0}".format(hires))
                 print(f"=========Despot {i} Start===========")
                 SMD_init(smdFile=smdFile)
+                Save_smd_from_configs(smdFile, items=cfg)
                 Despot_Decont(smdFile, cfg)
                 Despot_Cluster(smdFile, cfg)
                 Despot_Deconv(smdFile, cfg)
