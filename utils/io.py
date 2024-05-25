@@ -93,6 +93,17 @@ class smdInfo:
                         dat = pd.DataFrame(dat, columns=[key])
                         self.map_chains = pd.concat([self.map_chains, dat], axis=1)
                     self.map_chains.index = self.map_chains['cell-type']
+        
+        # add cell types if available
+        self.cell_types = []
+        if 'scRNA_seq' in mat:
+            with h5.File(self.smdFile, 'r') as f:
+                assert ('scRNA_seq' in f)
+                assert ('idents' in f['scRNA_seq'])
+                assert ('annotation' in f['scRNA_seq']['idents'])
+                anno = np.array(f['scRNA_seq']['idents']['annotation'][:], dtype='str')
+                self.cell_types = np.unique(anno)
+
 
         # add configs
         self.configs = {}
@@ -109,6 +120,9 @@ class smdInfo:
 
     def get_spmatrix(self):
         return list(self.spmatrixs.keys())
+    
+    def get_cell_types(self):
+        return self.cell_types
 
     def get_platform(self):
         if type(self.configs['platform']) == list:
@@ -214,6 +228,20 @@ def Save_smd_from_configs(smdFile, cfg_file="params.json", items: dict = None, c
                 # print(item)
                 f.create_dataset(name="configs/" + k, data=item)
     return 0
+
+
+def SMD_init(smdFile: str, force: bool = False):
+    # whether the file exists
+    if os.path.isfile(smdFile) and force is False:
+        # check the corrections of sptFile
+        if SMD_check_corrections(smdFile):
+            return
+
+    print("Initializing smdFile...")
+    cmd = "Rscript utils/Init.R"
+    os.system(cmd)
+    print("Done.")
+
 
 
 def SMD_check_corrections(smdFile):

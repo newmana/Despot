@@ -6,23 +6,8 @@ print("Importing requirements...")
 import json
 import shutil
 from utils.io import *
-from utils.api import Create_h5datas, Despot_Decont, Despot_Cluster, Despot_Deconv, Despot_Ensemble
-from utils.geo import Despot_Find_bestGroup, Despot_group_correlation,\
-    Show_self_correlation, Show_bash_best_group, Gen_venn
+from utils.api import Despot_Decont, Despot_Cluster, Despot_Deconv, Despot_Ensemble
 print("All requirements imported...")
-
-
-def SMD_init(smdFile: str, force: bool = False):
-    # whether the file exists
-    if os.path.isfile(smdFile) and force is False:
-        # check the corrections of sptFile
-        if SMD_check_corrections(smdFile):
-            return
-
-    print("Initializing smdFile...")
-    cmd = "Rscript utils/Init.R"
-    os.system(cmd)
-    print("Done.")
 
 
 def Replicate_run(cfg:dict, iterations=1):

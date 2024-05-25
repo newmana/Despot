@@ -454,7 +454,7 @@ def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_typ
 
 
 # 3D landscape for SCSPs
-def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=100, save=True, plot_edge=True):
+def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=100, save=True, plot_edge=True, name="landscape.png"):
     from mpl_toolkits.mplot3d import Axes3D
     from vsl.boundary import boundary_extract, show_edge
     from PIL import Image
@@ -524,11 +524,12 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
 
     # handle the compared pipline or Despot
     # the full cell-types for SCSPs
-    full_ct = list(smdinfo.get_map_chains().index)
+    full_ct = list(smdinfo.get_cell_types())
     full_ct.sort()
+    print(f"Full Cell Types: {full_ct}")
     if pipline is None:
         Best_df = smdinfo.get_map_chains()
-        figname = folder + '/landscape.png'
+        figname = f"{folder}/{name}"
     else:
         Best_df = Pipline_findgroups(smdFile, pipline, beta=1, greedy=1)
         Best_df['dct'] = 'matrix'
@@ -543,12 +544,12 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     else:
         # select the overlaps of provided cell_types and existing cell_types
         cell_types = list(set(cell_types).intersection(list(Best_df.index)))
-    print(f"Cell Types: {cell_types}")
-    print(f"Mapping cell-type-specific domains...")  
     # arrange the cell_types
     spot3Ds = {}
     centroid = []
     cell_types.sort()  # first sort the cell-type by alphabets
+    print(f"Cell Types: {cell_types}")
+    print(f"Mapping cell-type-specific domains...")  
     for cell_type in cell_types:
         Best_item = Best_df.loc[cell_type, :]
         domain = Best_item['domain']

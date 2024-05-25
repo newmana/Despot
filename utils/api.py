@@ -357,9 +357,7 @@ def Pip_deconv(smdFile, cfg, h5data='matrix', method="stereoScope", force=False,
         if state == 0:
             print("Deconvolution using Seurat finished.")
     elif method == 'Giotto':
-        state = subprocess.check_call(["Rscript", "dcv/Deconv_Giotto.R"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if state == 0:
-            print("Deconvolution using Giotto finished.")
+        os.system("Rscript dcv/Deconv_Giotto.R")
 
 
 def Despot_Decont(smdFile, cfg, force=False):
@@ -439,3 +437,32 @@ def Despot_Embedding(smdFile: Union[str, List[str]], cfg: Union[dict, List[dict]
         # embedding by harmony and hpca
         adata = Embed_Harmony(adata)
         Save_smd_from_Harmony(smdFiles=smdFile, adata=adata, h5data=h5data, name="Harmony")
+
+
+def Despot_Run(cfg):
+    name = cfg['name']
+    platform = cfg['platform']
+    cfg_json = json.dumps(cfg)
+    smdFile = cfg['smdFile']
+    # set running configs
+    Save_json_configs(cfg, "params.json")
+    # need hires?
+    print(f"=========Despot Info============")
+    print("smdFile:{0}".format(smdFile))
+    print("dataset name:{0}".format(name))
+    print("platform:{0}".format(platform))
+    print("Using hires img: {0}".format(cfg['load_hires']))
+    print(f"=========Despot Start===========")
+    SMD_init(smdFile=smdFile)
+    Save_smd_from_configs(smdFile, items=cfg)
+    Despot_Decont(smdFile, cfg)
+    Despot_Cluster(smdFile, cfg)
+    Despot_Deconv(smdFile, cfg)
+    Despot_Ensemble(smdFile)
+    print(f"=========Despot Finish==========")
+    print("smdFile:{0}".format(smdFile))
+    print("dataset name:{0}".format(name))
+    print("platform:{0}".format(platform))
+    print("Using hires img: {0}".format(cfg['load_hires']))
+    info = smdInfo(smdFile)
+    return info
