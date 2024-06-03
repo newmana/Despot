@@ -40,8 +40,12 @@ Analysis_scRNA_seq <- function(sce, top.HVGs = 3000){
   mgs <- scoreMarkers(sce, group=colData(sce)$free_annotation, subset.row = genes)
   mgs_ls <- lapply(names(mgs), function(i){
     x <- mgs[[i]]
-    # Filter and keep relevant marker genes, those with AUC > 0.8
-    x <- x[x$mean.AUC > 0.8, ]
+    # Filter and keep relevant marker genes, initially with AUC > 0.8
+    if(sum(x$mean.AUC > 0.8)){
+      x <- x[x$mean.AUC > 0.8, ]
+    } else{
+      x <- x[x$mean.AUC > 0.6, ]
+    }
     # Sort the genes from highest to lowest weight
     x <- x[order(x$mean.AUC, decreasing = TRUE), ]
     # Add gene and cluster id to the dataframe
@@ -467,9 +471,14 @@ Load_h5adsc_to_SCE <- function(scmat, scgnm = NA){
   dims <- c(length(h5ad.var[["_index"]]), length(h5ad.obs[["_index"]]))
   dat@Dim <- dims
   dat@Dimnames <- list(as.character(h5ad.var[["_index"]]), as.character(h5ad.obs[["_index"]]))
-  sce <- SingleCellExperiment(assays = list(counts = dat),
-                              rowData = DataFrame(data.frame(var)),
-                              colData = DataFrame(data.frame(obs)))
+  if(length(var) == 0){
+    sce <- SingleCellExperiment(assays = list(counts = dat),
+                                colData = DataFrame(data.frame(obs)))
+  } else{
+    sce <- SingleCellExperiment(assays = list(counts = dat),
+                                rowData = DataFrame(data.frame(var)),
+                                colData = DataFrame(data.frame(obs)))
+  }
 
   # add ground truth
   if(!is.na(scgnm)){

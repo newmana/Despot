@@ -5,7 +5,7 @@
   "dataSpices": "Mouse",
   "name": "FFPE_Mouse_Kidney_DropSeq",
   "filter_matrix": true,
-  "sptFile": "h5smds/FFPE_Mouse_Kidney_DropSeq.h5smd",
+  "smdFile": "h5smds/FFPE_Mouse_Kidney_DropSeq.h5smd",
   "ground_truth": "class.csv",
   "scDataPath": "data/scRNA-seq/Adult_Mouse_Kidney",
   "scType": "h5ad",
@@ -20,6 +20,6 @@
   "load_fullres": false,
   "fullres_path": "",
   "Decontamination": ["none","SPCS","SpotClean", "SPROD"],
-  "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "SEDR", "stlearn"],
+  "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "SEDR", "stlearn", "BASS", "MENDER"],
   "Deconvolution": ["CARD","Cell2Location", "SPOTlight", "SPOTlight_es", "SPOTlight_vae", "spacexr","spacexr_es", "Seurat", "Giotto", "StereoScope", "StereoScope_na", "StereoScope_es"]
 }

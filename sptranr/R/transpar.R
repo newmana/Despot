@@ -327,6 +327,9 @@ Save_H5ad_to_smd <- function(H5adir, smdFile, name="", platform="MERFISH", groun
       Create_smd_array1d(smdFile, as.character(var[[fea]]),paste0("matrix/features/", fea), "character")
     }
   }
+  if(!("name" %in% attr(var, "names"))){
+    Create_smd_array1d(smdFile, as.character(var[["_index"]]), "matrix/features/name", "character")
+  }
 
   # Load H5ad data coord to smdFile
   coord <- scmat$obsm$spatial
@@ -440,7 +443,7 @@ Load_smd_to_Seurat <- function(smdFile, platform="10X_Visium", imgdir = "", h5da
   library(Seurat)
   seu_obj <- Load_h5_to_Seurat(smdFile, h5data)
   # h5img <- rhdf5::h5read(smdFile, "sptimages")
-  if (platform == "10X_Visium"){
+  if (platform == "10X_Visium" && file.exists(imgdir)){
     seu_obj <- Load_img_to_Seurat(imgdir, seu_obj)
   }
   return(seu_obj)
@@ -567,6 +570,7 @@ Save_smd_from_BayesSpace <-function (smdFile, Bayes,
                        smdloc = "sptimages/enhance/spotnames",
                        mode = "character")
   }
+  print(paste0("Clustering with `BayesSpace` finished, Idents saved in /",h5data,'/idents/BayesSpace'))
 }
 
 Save_smd_from_SPARK <- function(smdFile, sparkX, h5data = 'matrix'){
@@ -617,6 +621,7 @@ Save_smd_from_Giotto_clu <- function(smdFile, gobj, h5data = 'matrix'){
                      arr = as.numeric(gobj@cell_metadata$leiden_clus),
                      smdloc = smdloc,
                      mode = "integer")
+  print(paste0("Clustering with `Giotto` finished, Idents saved in /",h5data,'/idents/Giotto'))
 }
 
 Save_smd_from_Giotto_est <- function(smdFile, spatialgenes, h5data = 'matrix'){
