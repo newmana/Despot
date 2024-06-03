@@ -454,7 +454,17 @@ def Show_Comparison(smdFile,folder, figsize=(3.5,3), compare='platform',cell_typ
 
 
 # 3D landscape for SCSPs
-def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pipline=None,imgPath=None, alpha=100, save=True, plot_edge=True, name="landscape.png"):
+def Show_3D_landscape(smdFile, 
+                      folder=os.getcwd(), 
+                      cell_types=None, 
+                      sf=None, 
+                      pipline=None,
+                      imgPath=None, 
+                      alpha=100, 
+                      save=True, 
+                      plot_edge=True, 
+                      name="landscape.png",
+                      legend=True):
     from mpl_toolkits.mplot3d import Axes3D
     from vsl.boundary import boundary_extract, show_edge
     from PIL import Image
@@ -532,10 +542,11 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
         figname = f"{folder}/{name}"
     else:
         Best_df = Pipline_findgroups(smdFile, pipline, beta=1, greedy=1)
-        Best_df['dct'] = 'matrix'
-        Best_df['dcv'] = pipline
-        Best_df['clu'] = pipline
-        figname = folder + '/{0}.png'.format(pipline)
+        if len(Best_df > 0):
+            Best_df['dct'] = 'matrix'
+            Best_df['dcv'] = pipline
+            Best_df['clu'] = pipline
+            figname = f"{folder}/{pipline}_{name}"
     if cell_types is None:
         if len(Best_df) > 0:
             cell_types = list(Best_df.index)
@@ -672,14 +683,15 @@ def Show_3D_landscape(smdFile, folder=os.getcwd(), cell_types=None, sf=None, pip
     ax1.set_yticks(ticks=range(h))
     ax1.set_zticks(ticks=range(int(z*1.5)))
     ax1.axis('off')
-    ax1.legend(loc='lower left', ncol=3, frameon=False,
-               bbox_to_anchor=(0.1, -0.05),
-               handletextpad=0.3,
-               borderpad=0.5,
-               borderaxespad=1.05,
-               columnspacing=0.7,
-               handlelength=0.7,
-               fontsize=14)
+    if legend:
+        ax1.legend(loc='lower left', ncol=3, frameon=False,
+                bbox_to_anchor=(0.1, -0.05),
+                handletextpad=0.3,
+                borderpad=0.5,
+                borderaxespad=1.05,
+                columnspacing=0.7,
+                handlelength=0.7,
+                fontsize=14)
     if save:
         print(f"Saving 3DLandscape to {figname}")
         fig.savefig(figname, dpi=400)

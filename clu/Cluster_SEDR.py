@@ -9,12 +9,12 @@ import sys
 
 def sedr_install():
     # download SPROD handle python dependencies
+    py_req = Check_Requirements({"python-louvain", "scikit-learn", "bokeh", "matplotlib",
+                                "torch-geometric", "torchvision","progress",
+                                "scikit-network", "imageio", "leidenalg", "umap-learn", "python-igraph"})
     if not os.path.isdir(os.path.join(os.getcwd(), "SEDR")):
         print("Dependencies will be installed when Using SEDR for the first time.")
         # handle python dependencies
-        py_req = Check_Requirements({"python-louvain", "scikit-learn", "bokeh", "matplotlib",
-                                     "torch-geometric", "torchvision",'progress',
-                                     "scikit-network", "imageio", "leidenalg", "umap-learn", "python-igraph"})
 
         py_ins = os.system("git clone -b v0.1.0 https://github.com/JinmiaoChenLab/SEDR.git")
         if py_ins+py_req == 0:
