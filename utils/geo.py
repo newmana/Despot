@@ -622,6 +622,10 @@ def Show_3D_landscape(smdFile,
         # print(full_ct.index(cell_type))
         color = palette[full_ct.index(cell_type)]  # get the related cell-type color
         spot3D = spot3Ds[cell_type]
+        pts = np.array(spot3D[['X', 'Y']])
+        edges, centers = boundary_extract(pts, alpha / np.max(pts))
+        if plot_edge:
+            show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
         if len(spot3D_layer) == 0:
             z = 1 if has_img else 0
             spot3D_layer[z] = [cell_type]
@@ -642,9 +646,6 @@ def Show_3D_landscape(smdFile,
             if need_new_layer:
                 z = max(list(spot3D_layer.keys())) + 1
                 spot3D_layer[z] = [cell_type]
-        pts = np.array(spot3D[['X', 'Y']])
-        alpha = alpha / np.max(pts)
-        edges, centers = boundary_extract(pts, alpha)
         spot3D['Z'] = np.ones_like(spot3D.index) * z
         if smdinfo.get_platform() == 'ST':
             s = 30
@@ -663,8 +664,6 @@ def Show_3D_landscape(smdFile,
             y = spot3D['Y'].iloc[item]
             zz = spot3D['Z'].iloc[item]
             ax1.plot([x, x], [y, y], [zz, 0], color=color, alpha=0.5, linewidth=1.25)
-        if plot_edge:
-            show_edge(edges, ax1, z=0, color=color, linewidth=2, alpha=1, label=None)
     print(f"Plotting surfaces using {smdinfo.get_platform()}...")
     if smdinfo.get_platform() == '10X Visium':
         ax1.plot_surface(imgX, imgY, np.atleast_2d(0), rstride=10, cstride=10, facecolors=img0[xmin:xmax, ymin:ymax],
