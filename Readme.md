@@ -1,6 +1,6 @@
 # Despot
 
-Spot-based spatial resolved transcriptomic (SRT) technologies facilitate the elucidation of cellular function by preserving invaluable spatial contexts.Currently, associating cell-types of single-cell profiles with spatial domains in SRT remains a challenge. Here, we propose a novel multi-modality integration approach called Despot to detect spatial domains correlating to single-cell profiles (SCSPs). Despot synthesizes segmentation and deconvolution using the deep-learning model to associate cell-types with appropriate domains. We demonstrate the advantages of Despot insensitivity and effectiveness. Additionally, we discover the co-localization between fibroblasts and immune-related  cells that indicate potential tumor microenvironment (TME) domains in  the given slices obscured by previous SCSP detection approaches. We further elucidate the identified domains and find that *Srgn* may be an important TME marker in SRT slices. By deciphering SCSPs of T cells in breast cancer tissue, we demonstrate  that the proportions of exhausted T cells are significantly larger in  invasive carcinoma than in ductal carcinoma.
+Cell-type-specific domains are the anatomical domains in spatially resolved transcriptome (SRT) tissues where particular cell types are enriched coincidentally. Precisely detecting these domains is essential for the biological understanding of tissue architectures and cell co-localizations. However, using existing computational methods is challenging to detect specific domains with low-proportion cell types, which are partly overlapped with or even inside other cell-type-specific domains. Here, we propose an approach called Despot that synthesizes segmentation and deconvolution as an ensemble to generate cell-type patterns, detect low-proportion cell-type specific domains, and display these domains intuitively. Experimental evaluation showed that Despot enabled us to discover the co-localizations between cancer-associated fibroblasts and immune-related cells that indicate potential tumor microenvironment (TME) domains in given slices, which was obscured by previous computational methods. We further elucidated the identified domains and found that Srgn may be a critical TME marker in SRT slices. By deciphering T-cell-specific domains in breast cancer tissues, Despot also revealed that the proportions of exhausted T cells were significantly more enormous in invasive than in ductal carcinoma. 
 
 ![overview](overview.png)
 
@@ -18,7 +18,7 @@ conda activate Despot
 pip install -r requirements.txt
 ```
 
-Time to install the requirements depends on the operating system, and it's about 30 minutes.
+Time to install the requirements depends on the operating system.
 
 **For R 4.1.3:**
 
@@ -31,13 +31,15 @@ BiocManager::install(c("rhdf5", "png", "rjson","data.table","SingleCellExperimen
 
 ## Usage
 
+### Execution in Shell/Bash
+
 We run the `main.py` to execute the configures in `/configs` using python:
 
 ```shell
 python main.py
 ```
 
-The required softwares will be installed automatically. Users also can install them manually using the URLs in `source.md `.  The smdFiles generated are stored in `h5ads`.
+The required softwares will be installed automatically. Users also can install them manually using the URLs in `source.md `.  The smdFiles generated are stored in `h5smds`.
 
 **Config Settings**
 
@@ -72,7 +74,29 @@ In default, we run the configures in `/configs`. Users can set their own configs
 
 Despot will load these configs first, check for the environments, and run for outputs in smdFiles.
 
+### Execution in Python console
+
+`TODO`
+
 ## Description
+
+### Cell-type Specific Domains
+
+Conventional spatial domains are expected to have high intra-cluster similarity within each domain and low inter-cluster similarity between different domains. Cell-type-specific domains are further expected to be spatial heterogenous domains where the proportions of given cell types are significantly higher than other domains. In addition, cell-type-specific domains is suitable for SRT slices in both spot-level and single-cell resolution. Compared with conventional domains, cell-type-specific domains mainly focus on the location of potential cell types and relax restrictions on regional segmentation. Here is an example:
+
+
+
+<img src="domain_example.png" alt="cts" style="zoom:33%;" />
+
+Figure 1A, conventional spatial domains separate the tissue into $D_1$ , $D_2$, $D_3$ and $D_4$. Each pair of them has no overlaps. Figure 1B, the specific domains of cell-type $c_1$, $c_2$, $c_3$, $c_4$ and $c_5$ are identified as $D_1^*$, $D_2^*$, $D_3^*$, $D_4^*$ and $D_5^*$. In particular, the $D_1^*$ specific domain is totally overlapped with D2, and they are inside the  $D_3^*$ specific domain. The $D_4^*$ specific domain is partly overlapped $D_5^*$, and their overlapped domain is marked by yellow.
+
+
+
+### Despot Algorithm
+
+Despot aims to precisely detect cell-type specific domains in sequencing-based spatial transcriptomics data via ensemble learning. We developed a data representation called *smd* as the core data structure of Despot. In addition to spatial modalities analysis, Despot provides a variational inference module to derive single-cell patterns. Despot integrates several segmentation and deconvolution methods as an ensemble to detect cell-type-specific domains in the modality integration module. After detecting cell-type-specific domains, Despot examines the upregulated genes of these domains, deciphers the cell-type co-localizations, and finally visualizes them using 3D landscapes.
+
+
 
 ### Data Respresentation
 
@@ -80,7 +104,15 @@ Despot designs a spatial multi-omics data representation format called *smd* bas
 
 ![smd](smd.png)
 
-### 
+### 3D Landscape
 
+Despot designs 3D landscapes to display the detected cell-type-specific domains. The generated landscapes curve the outlines of cell-type-specific domains in tissues and display the overlapped domains in layered structures. Despot uses the Alpha-shape algorithm to curve the contour lines in tissues and uses dots with colors to represent the layers of cell-type-specific domains. To map the layered structures onto contour lines, Despot randomly selects dots of 10 percent for each layer and creates waterfall lines to link the dots and outlined regions together. 3DLandscapes can be displayed using the function `Show_3DLandscape`, which receives an output SMD file from Despot. Here is an example:
 
+<img src="3DLandscape.png" alt="3DLandscape" style="zoom: 33%;" />
+
+**Figure 3**. A demo of a 3D Landscape, corresponding to Figure S1C. Key elements like cell-type specific domains, slice images, waterfall lines, contour lines, and co-localization statuses are marked out by red arrays. Slice Image is at the bottom of the 3D Landscape, contour lines are drawn in the slice image. Cell-type-specific domains are plotted in hierarchical layers, which are linked with contours in the slice image by the waterfall lines. The 3D landscape intuitively displays the cell co-localization status. In particular, domain brown and domain blue are totally overlapped, domain blue is inside the domain yellow, domain purple, and domain green are partly overlapped, and domain pink is adjacent to domain purple. 
+
+## APIs
+
+`TODO`
 
