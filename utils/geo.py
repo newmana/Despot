@@ -57,7 +57,10 @@ def p_moransI_purity(adata, dcv_mtd: str, clu: str):
         nmi = normalized_mutual_info_score(true, pred)
         pf = pd.DataFrame(data=[MI.I, ari, nmi, ps], index=['moransI', 'ARI', 'NMI', 'purity'], columns=[comp])
         pf = pf.T
-        perf = pd.concat([perf, pf], ignore_index=False)
+        if not perf.empty:
+            perf = pd.concat([perf, pf], ignore_index=False)
+        else:
+            perf = pf.copy()
     return perf
 
 
@@ -192,8 +195,30 @@ def Despot_findgroups(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=N
     return Best_Fscore
 
 
-def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None):
-    Best_Fscore = Despot_findgroups(smdFile, beta, greedy, spmat_subset, clu_subset, dcv_subset)
+def Despot_Ground_Mapping(smdFile, beta=1, greedy=1,dcv_subset=None):
+    smdinfo = smdInfo(smdFile)
+    platform = smdinfo.get_platform()
+    Best_Fscore = {}
+    spmat = 'matrix'
+    adata = Load_smd_to_AnnData(smdFile, spmat, loadDeconv=True, platform=platform)
+    dcv_mtds = smdinfo.get_dcv_methods(spmat)
+    clu = "ground_truth"
+    if dcv_subset:
+        dcv_mtds = list(set(dcv_mtds).intersection(dcv_subset))
+    for dcv in dcv_mtds:
+        mtd_name = "{0}+{1}+{2}".format(spmat, dcv, clu)
+        print("Finding Groups in the combination of {0}".format(mtd_name))
+        perf = p_moransI_purity(adata, dcv_mtd=dcv, clu=clu)
+        perf = perf[perf['moransI'] > getMoranHP(platform)]
+        BST = suitable_location(adata, perf, clu, beta, greedy)
+        Best_Fscore[mtd_name] = BST
+    return Best_Fscore
+
+def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subset=None, dcv_subset=None, gt=False):
+    if gt:
+        Best_Fscore = Despot_Ground_Mapping(smdFile, beta, greedy,dcv_subset=dcv_subset)
+    else:
+        Best_Fscore = Despot_findgroups(smdFile, beta, greedy, spmat_subset, clu_subset, dcv_subset)
     Best_dict = {}
 
     # find the best method chains
@@ -255,8 +280,10 @@ def Despot_Find_bestGroup(smdFile, beta=1, greedy=1, spmat_subset=None, clu_subs
                 break
         Best_dict[ct] = (f1score, tuple(domain_list), mtd)
 
-    if len(Best_dict) > 0:
+    if len(Best_dict) > 0 and gt==False:
         Save_smd_from_BestDict(smdFile, Best_dict)
+    else:
+        print("Length of Best_dict is 0 or Ground Truth Mapping. Saving Canceled.")
     return Best_dict, Best_Fscore
 
 
@@ -373,7 +400,8 @@ def Fscore_Comparison_pip(smdFile, has_ground_truth=False):
         pip_perf = Pipline_findgroups(smdFile, pip, beta=1, greedy=1)
         pip_res[pip] = pip_perf.iloc[:, 0]
     if has_ground_truth:
-        pip_gt, _ = Despot_Find_bestGroup(smdFile, beta=1, greedy=1, clu_subset=['ground_truth'])
+        pip_gt, _ = Despot_Find_bestGroup(smdFile, beta=1, greedy=1,gt=True)
+
         col = ["cell-type", "F1-score", "domain", "dct", "dcv", "clu"]
         best_df = pd.DataFrame(columns=col)
         cell_types = pip_gt.keys()

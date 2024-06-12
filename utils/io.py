@@ -101,7 +101,7 @@ class smdInfo:
                 assert ('scRNA_seq' in f)
                 assert ('idents' in f['scRNA_seq'])
                 assert ('annotation' in f['scRNA_seq']['idents'])
-                anno = np.array(f['scRNA_seq']['idents']['annotation'][:], dtype='str')
+                anno = bytes2str(f['scRNA_seq']['idents']['annotation'][:])
                 self.cell_types = np.unique(anno)
 
 
