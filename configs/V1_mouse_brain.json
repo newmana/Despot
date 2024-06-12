@@ -22,5 +22,5 @@
   "fullres_path": "",
   "Decontamination": ["none","SpotClean","SPCS", "SPROD"],
   "Clustering": ["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden"],
-  "Deconvolution": ["CARD","Cell2Location","SPOTlight", "SPOTlight_es", "SPOTlight_vae","spacexr", "spacexr_es", "StereoScope", "StereoScope_na", "StereoScope_es"]
+  "Deconvolution": ["Giotto","Seurat","CARD","Cell2Location","SPOTlight", "SPOTlight_es", "SPOTlight_vae","spacexr", "spacexr_es", "StereoScope", "StereoScope_na", "StereoScope_es"]
 }
