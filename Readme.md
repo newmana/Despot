@@ -84,11 +84,11 @@ Conventional spatial domains are expected to have high intra-cluster similarity 
 
 $$\mathcal{D}_{cts}=\{(c_i,D_i )|i∈\{1,2,…,m\},c_i∈C,D_i⊆S\}$$
 
-Cell-type-specific domains in $\mathcal{D}_{cts}$ have two properties: (1) they allow existing $i≠j∈\{1,2,…,m\}$ such that $D_i∩D_j≠∅$ and (2) $\cup_{(i=1)}^mD_i ⊆S$. It means that a spot may belong to one or multiple cell-type-specific domains, meanwhile some spots are not encompassed by any cell-type-specific domains. For the detection of cell-type-specific domain tuple $(c_i,D_i )∈\mathcal{D}_{cts}$ , let $M$ denote the difference in the proportion of $c_i$ between $D_i$ and other domains.
+Cell-type-specific domains have two properties: (1) they allow existing $i≠j∈\{1,2,…,m\}$ such that $D_i∩D_j≠∅$ and (2) $\cup_{i=1}^mD_i ⊆S$. It means that a spot may belong to one or multiple cell-type-specific domains, meanwhile some spots are not encompassed by any cell-type-specific domains. For the detection of cell-type-specific domain tuple $(c_i,D_i )∈\mathcal{D}_{cts}$ , let $M$ denote the difference in the proportion of $c_i$ between $D_i$ and other domains.
 
 $$M=\frac{\sum_{s∈D_i}P(s,c_i )}{|D_i|} -\frac{\sum_{s∈S\setminus D_i}P(s,c_i )}{|S|-|D_i |},0<|D_i |<|S|$$
 
-Here, $P(s,c_i )$ denotes the cell proportions of $c_i$ within spot $s$ in spot-level slices. In single-cell level SRT slices, $P(s,c_i )$ denotes the probability that the ground truth cell type of spot $s$ is $c_i$. $P(s,c_i )∈[0,1]$,$M∈[-1,1]$. The cell-type-specific domain $D_i$ is optimized to be spatially heterogeneous and have the maximization of $M$.
+Here, $P(s,c_i )$ denotes the cell proportions of $c_i$ within spot $s$ in spot-level slices. In single-cell level SRT slices, $P(s,c_i )$ denotes the probability that the ground truth cell type of spot $s$ is $c_i$. $P(s,c_i )∈[0,1]$, $M∈[-1,1]$. The cell-type-specific domain $D_i$ is optimized to be spatially heterogeneous and have the maximization of $M$.
 
 Compared with conventional domains, cell-type-specific domains mainly focus on the location of potential cell types and relax restrictions on regional segmentation. Here is an example:
 
@@ -287,6 +287,7 @@ Despot begins with three inputs: (1) a spatial expression matrix of unique molec
 - **plot_edge** (bool, default: `True`), Whether to plot contour lines in the slice image.
 - **name** (str, default: `'landscape.png'`), Name of 3DLandscape images. The DPI is set to 300 for `PNG`, and `JPEG` files. 
 - **legend** (bool, default: `True`), Whether to show legends.
+- **Return:** dict(pd.DataFrame['x', 'y', 'z']), Returns the spots coordinates of cell types in 3DLandscapes.
 
 ### Tutorials
 
