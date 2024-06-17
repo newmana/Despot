@@ -78,15 +78,25 @@ Despot will load these configs first, check for the environments, and run for ou
 
 ## Description
 
-### Cell-type Specific Domains
+### Cell-type-specific Domains
 
-Conventional spatial domains are expected to have high intra-cluster similarity within each domain and low inter-cluster similarity between different domains. Cell-type-specific domains are further expected to be spatial heterogenous domains where the proportions of given cell types are significantly higher than other domains. In addition, cell-type-specific domains is suitable for SRT slices in both spot-level and single-cell resolution. Compared with conventional domains, cell-type-specific domains mainly focus on the location of potential cell types and relax restrictions on regional segmentation. Here is an example:
+Conventional spatial domains are expected to have high intra-cluster similarity within each domain and low inter-cluster similarity between different domains. Cell-type-specific domains are further expected to be spatial heterogenous domains where the proportions of given cell types are significantly higher than other domains. In addition, cell-type-specific domains is suitable for SRT slices in both spot-level and single-cell resolution. Formally, suppose the SRT slice contains n spots $S=\{s_1,s_2,…,s_n\}$ and single-cell profiles provide m potential cell types $C=\{c_1,c_2,…,c_m\}$. Each cell type $c_i$ is combined with its detected specific domain $D_i$ as a cell-type-specific domain tuple $(c_i,D_i)$, and the set of all these tuples is denoted as $\mathcal{D}_{cts}$.
+
+$$\mathcal{D}_{cts}=\{(c_i,D_i )|i∈\{1,2,…,m\},c_i∈C,D_i⊆S\}$$
+
+Cell-type-specific domains in $\mathcal{D}_{cts}$ have two properties: (1) they allow existing $i≠j∈{1,2,…,m}$ such that $D_i∩D_j≠∅$ and (2) $\cup_{(i=1)}^mD_i ⊆S$. It means that a spot may belong to one or multiple cell-type-specific domains, meanwhile some spots are not encompassed by any cell-type-specific domains. For the detection of cell-type-specific domain tuple $(c_i,D_i )∈\mathcal{D}_{cts}$ , let $M$ denote the difference in the proportion of $c_i$ between $D_i$ and other domains.
+
+$$M=\frac{\sum_{s∈D_i}P(s,c_i )}{|D_i|} -\frac{\sum_{s∈S\setminus D_i}P(s,c_i )}{|S|-|D_i |},0<|D_i |<|S|$$
+
+Here, $P(s,c_i )$ denotes the cell proportions of $c_i$ within spot $s$ in spot-level slices. In single-cell level SRT slices, $P(s,c_i )$ denotes the probability that the ground truth cell type of spot $s$ is $c_i$. $P(s,c_i )∈[0,1]$,$M∈[-1,1]$. The cell-type-specific domain $D_i$ is optimized to be spatially heterogeneous and have the maximization of $M$.
+
+Compared with conventional domains, cell-type-specific domains mainly focus on the location of potential cell types and relax restrictions on regional segmentation. Here is an example:
 
 
 
 <img src="domain_example.png" alt="cts" style="zoom:33%;" />
 
-Figure 1A, conventional spatial domains separate the tissue into $D_1$ , $D_2$, $D_3$ and $D_4$. Each pair of them has no overlaps. Figure 1B, the specific domains of cell-type $c_1$, $c_2$, $c_3$, $c_4$ and $c_5$ are identified as $D_1^*$, $D_2^*$, $D_3^*$, $D_4^*$ and $D_5^*$. In particular, the $D_1^*$ specific domain is totally overlapped with D2, and they are inside the  $D_3^*$ specific domain. The $D_4^*$ specific domain is partly overlapped $D_5^*$, and their overlapped domain is marked by yellow.
+Figure 1A, conventional spatial domains separate the tissue into $D_1$ , $D_2$, $D_3$ and $D_4$. Each pair of them has no overlaps. Figure 1B, the specific domains of cell-type $c_1$, $c_2$, $c_3$, $c_4$ and $c_5$ are identified as $D_1^*,D_2^*,D_3^*,D_4^*,D_5^*$. In particular, the $D_1^*$ specific domain is totally overlapped with D2, and they are inside the  $D_3^*$ specific domain. The $D_4^*$ specific domain is partly overlapped $D_5^*$, and their overlapped domain is marked by yellow.
 
 
 
@@ -108,7 +118,7 @@ Despot designs 3D landscapes to display the detected cell-type-specific domains.
 
 <img src="3DLandscape.png" alt="3DLandscape" style="zoom: 33%;" />
 
-**Figure 3**. A demo of a 3D Landscape, corresponding to Figure S1C. Key elements like cell-type specific domains, slice images, waterfall lines, contour lines, and co-localization statuses are marked out by red arrays. Slice Image is at the bottom of the 3D Landscape, contour lines are drawn in the slice image. Cell-type-specific domains are plotted in hierarchical layers, which are linked with contours in the slice image by the waterfall lines. The 3D landscape intuitively displays the cell co-localization status. In particular, domain brown and domain blue are totally overlapped, domain blue is inside the domain yellow, domain purple, and domain green are partly overlapped, and domain pink is adjacent to domain purple. 
+**Figure 3**. A demo of a 3D Landscape, corresponding to Figure S1C. Key elements like cell-type specific domains, slice images, waterfall lines, contour lines, and co-localization statuses are marked out by red arrays. Slice Image is at the bottom of the 3D Landscape, contour lines are drawn in the slice image. Cell-type-specific domains are plotted in hierarchical layers, which are linked with contours in the slice image by the waterfall lines. The 3D landscape intuitively displays the cell co-localization status. In particular, domain brown and domain blue are totally overlapped, domain blue is inside the domain yellow, domain purple and domain green are partly overlapped, and domain pink is adjacent to domain purple. 
 
 ## APIs & Tutorials
 

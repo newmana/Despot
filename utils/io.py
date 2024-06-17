@@ -672,9 +672,9 @@ def Save_meta_from_spData(out_dir, spdata, sample_name, filename='spt_meta.tsv')
     return
 
 
-def Load_smd_to_stData(smdFile, count="matrix", hires=False, dtype=None):
+def Load_smd_to_stData(smdFile, h5data="matrix", hires=False, dtype=None):
     import stlearn as st
-    adata = Load_smd_to_AnnData(smdFile, count, hires, dtype)
+    adata = Load_smd_to_AnnData(smdFile, h5data, hires, dtype)
     adata.var_names_make_unique()
     adata.obs_names_make_unique()
     adata = st.convert_scanpy(adata)
