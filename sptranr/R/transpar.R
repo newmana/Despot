@@ -508,6 +508,105 @@ Load10Xh5_to_Seurat <- function(dir, filtered.matrix = T,
 }
 
 
+Save_smd_from_Idents <- function(smdFile, arr, title, h5data = 'matrix'){
+  smdloc = paste0(h5data, '/idents/', title)
+  # create `idents` in matrix
+  Create_smd_array1d(smdFile,
+                     arr = as.numeric(arr),
+                     smdloc = smdloc,
+                     mode = "integer")
+  print(paste0("Idents saved in /",h5data,'/idents/', title))
+}
+
+Save_smd_from_Deconv <- function(smdFile, deMatrix, title, h5data = 'matrix'){
+  results <- as(deMatrix, "unpackedMatrix")
+  h5createGroup(smdFile, paste0(h5data, '/deconv/', title))
+  
+  # save 1d weights
+  Create_smd_array1d(smdFile,
+                     arr = results@x,
+                     smdloc = paste0(h5data, '/deconv/', title, '/weights'),
+                     mode = 'double')
+  # save shape
+  Create_smd_array1d(smdFile,
+                     arr = results@Dim,
+                     smdloc = paste0(h5data, '/deconv/', title, '/shape'),
+                     mode = 'integer')
+  # save dim names
+  Create_smd_array1d(smdFile,
+                     arr = rownames(results),
+                     smdloc = paste0(h5data, '/deconv/', title, '/barcodes'),
+                     mode = 'character')
+  Create_smd_array1d(smdFile,
+                     arr = colnames(results),
+                     smdloc = paste0(h5data, '/deconv/', title,'/cell_type'),
+                     mode = 'character')
+  print(paste0("Deconv saved in /",h5data,'/deconv/', title))
+}
+
+Save_smd_from_Reduct <- function(smdFile, reduct, title, h5data = 'matrix'){
+  results <- as(reduct, "unpackedMatrix")
+  h5createGroup(smdFile, paste0(h5data, '/reduction/', title))
+  
+  # save 1d weights
+  Create_smd_array1d(smdFile,
+                     arr = results@x,
+                     smdloc = paste0(h5data, '/reduction/', title, '/weights'),
+                     mode = 'double')
+  # save shape
+  Create_smd_array1d(smdFile,
+                     arr = results@Dim,
+                     smdloc = paste0(h5data, '/reduction/', title, '/shape'),
+                     mode = 'integer')
+  
+  print(paste0("Reduction saved in /",h5data,'/reduction/', title))
+}
+
+Save_smd_from_spMat <- function(smdFile, spMat, title){
+  h5data <- title
+  rhdf5::h5createGroup(smdFile, h5data)
+  spMat <- as(spMat, "dgCMatrix")
+  # create barcodes
+  Create_smd_array1d(smdFile,
+                     arr = colnames(spMat),
+                     smdloc = paste0(h5data, "/barcodes"),
+                     mode = "character")
+  
+  # create data, indices, indptr, shape
+  Create_smd_array1d(smdFile,
+                     arr = spMat@x,
+                     smdloc = paste0(h5data, "/data"),
+                     mode = "double")
+  Create_smd_array1d(smdFile,
+                     arr = spMat@i,
+                     smdloc = paste0(h5data, "/indices"),
+                     mode = "integer")
+  Create_smd_array1d(smdFile,
+                     arr = spMat@p,
+                     smdloc = paste0(h5data, "/indptr"),
+                     mode = "integer")
+  Create_smd_array1d(smdFile,
+                     arr = spMat@Dim,
+                     smdloc = paste0(h5data, "/shape"),
+                     mode = "integer")
+  # create features
+  rhdf5::h5createGroup(smdFile, paste0(h5data, "/features"))
+  Create_smd_array1d(smdFile,
+                     arr = rownames(spMat),
+                     smdloc = paste0(h5data, "/features/name"),
+                     mode = "character")
+  rhdf5::h5createGroup(smdFile, paste0(h5data, "/features/is_HVG"))
+  
+  # create `idents`
+  rhdf5::h5createGroup(smdFile, paste0(h5data, "/idents"))
+  # create `deconv`
+  rhdf5::h5createGroup(smdFile, paste0(h5data, "/deconv"))
+  # create `reduction`
+  rhdf5::h5createGroup(smdFile, paste0(h5data, "/reduction"))
+  
+  print(paste0("spMat saved in /",h5data))
+}
+
 Save_smd_from_Seurat <- function(smdFile, seu, h5data = 'matrix'){
 
   smdloc = paste0(h5data, '/idents/Seurat')
@@ -676,7 +775,7 @@ Save_smd_from_Giotto_dcv <- function(smdFile, gobj, h5data = 'matrix'){
 }
 
 # smd to SingleCellExperiment object
-Load_smd_to_SCE <- function(smdFile, h5data = 'matrix'){
+Load_smd_to_SCE <- function(smdFile, platform = '10X_Visium', h5data = 'matrix'){
   library(SingleCellExperiment)
   library(SummarizedExperiment)
 

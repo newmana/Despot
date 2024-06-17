@@ -1,5 +1,7 @@
 # Despot
 
+### Summary
+
 Cell-type-specific domains are the anatomical domains in spatially resolved transcriptome (SRT) tissues where particular cell types are enriched coincidentally. Precisely detecting these domains is essential for the biological understanding of tissue architectures and cell co-localizations. However, using existing computational methods is challenging to detect specific domains with low-proportion cell types, which are partly overlapped with or even inside other cell-type-specific domains. Here, we propose an approach called Despot that synthesizes segmentation and deconvolution as an ensemble to generate cell-type patterns, detect low-proportion cell-type specific domains, and display these domains intuitively. Experimental evaluation showed that Despot enabled us to discover the co-localizations between cancer-associated fibroblasts and immune-related cells that indicate potential tumor microenvironment (TME) domains in given slices, which was obscured by previous computational methods. We further elucidated the identified domains and found that Srgn may be a critical TME marker in SRT slices. By deciphering T-cell-specific domains in breast cancer tissues, Despot also revealed that the proportions of exhausted T cells were significantly more enormous in invasive than in ductal carcinoma. 
 
 ![overview](overview.png)
@@ -74,10 +76,6 @@ In default, we run the configures in `/configs`. Users can set their own configs
 
 Despot will load these configs first, check for the environments, and run for outputs in smdFiles.
 
-### Execution in Python console
-
-`TODO`
-
 ## Description
 
 ### Cell-type Specific Domains
@@ -98,7 +96,7 @@ Despot aims to precisely detect cell-type specific domains in sequencing-based s
 
 
 
-### Data Respresentation
+### Data Representation
 
 Despot designs a spatial multi-omics data representation format called *smd* based on HDF5 binary data. A *smd* file has interfaces with Python and R infrastructures, containing *spContexts* and a series of *scMatrixs* and *spMatrixs*, whose core matrices are column compressed. 
 
@@ -112,7 +110,174 @@ Despot designs 3D landscapes to display the detected cell-type-specific domains.
 
 **Figure 3**. A demo of a 3D Landscape, corresponding to Figure S1C. Key elements like cell-type specific domains, slice images, waterfall lines, contour lines, and co-localization statuses are marked out by red arrays. Slice Image is at the bottom of the 3D Landscape, contour lines are drawn in the slice image. Cell-type-specific domains are plotted in hierarchical layers, which are linked with contours in the slice image by the waterfall lines. The 3D landscape intuitively displays the cell co-localization status. In particular, domain brown and domain blue are totally overlapped, domain blue is inside the domain yellow, domain purple, and domain green are partly overlapped, and domain pink is adjacent to domain purple. 
 
-## APIs
+## APIs & Tutorials
 
-`TODO`
+### Despot
 
+Despot begins with three inputs: (1) a spatial expression matrix of unique molecular identifier (UMI) counts, (2) the accompanying spatial coordinates and images, and (3) a single-cell (single-nucleus) gene-expression profile with annotations that are configured in a JSON file.
+
+##### APIs in one-stop
+
+**SMD_init(smdFile, force)**: Initialize the SMD File.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+-  **force** (bool, default: `False`), If it is set to `False`, initialization will be skipped when smdFile already exists, and if it is set to `True`, initialization will be forced.
+- **Return:** `None`
+
+**SMD_check_corrections(smdFile)**: Checking the correction of SMD File.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+
+**Save_smd_from_configs (smdFile, cfg_file, items, change_cfg)**: Saving configs to SMD File after initialization. 
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **cfg_file** (str/os.Path), Path to the config File.
+- **items** (dict/None), Config items to store in SMD File.
+- **change_cfg** (bool, default: `False`), Whether enable configs to change using **items**.
+
+**Despot_Run(smdFile)**: Run Despot in one-stop. This function integrated all the Despot APIs as a workflow.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **Return:** `None`
+
+##### APIs step-by-step
+
+**In utils/api.py:**
+
+**Despot_Decont(smdFile, cfg, force)**: Generating preprocessed and decontaminated `spMatrix`.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **cfg** (dict), config of Despot, from `params.json`. This function loads the `decontamination` members in the configs, which accept `["none", "SPCS", "SpotClean", "SPROD"] `.
+-  **force** (bool, default: `False`), If it is set to `False`, decontamination will be skipped when decontamination results already exist, and if it is set to `True`, decontamination will be forced.
+- **Return:** `None`
+
+**Despot_Cluster(smdFile, cfg, force)**: Generating spatial domain candidates from different `spMatrix`.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **cfg** (dict), config of Despot, from `params.json`. This function loads the `cluster` members in the configs, which accept `["Seurat", "Giotto", "BayesSpace", "SpaGCN", "leiden", "stlearn", "SEDR", "BASS", "MENDER", "Squidpy"] `.
+-  **force** (bool, default: `False`), If it is set to `False`, clustering will be skipped when spatial domain candidates already exist, and if it is set to `True`, clustering will be forced.
+- **Return:** `None`
+
+**Despot_Deconv(smdFile, cfg, force)**: Generating single-cell patterns in `scMatrix` and cell-type proportion candidates from different `spMatrix`.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **cfg** (dict), config of Despot, from `params.json`. This function loads the `deconvolution` members in the configs, which accept `["CARD", "Seurat", "Giotto", "Cell2Location", "SPOTlight", "SPOTlight_es", "SPOTlight_vae", "spacexr", "spacexr_es", "StereoScope", "StereoScope_na", "StereoScope_es"] `.
+-  **force** (bool, default: `False`), If it is set to `False`, deconvolution will be skipped when cell-type proportion candidates already exist, and if it is set to `True`, deconvolution will be forced.
+- **Return:** `None`
+
+**Despot_Embedding(smdFile, cfg)**: Correcting batch effects and generating integrated reductions.
+
+- **smdFile** (Union[str, List[str]]), Path or Path list to the SMD File.
+- **cfg** (Union[dict, List[dict]]), config or config list of Despot, from `params.json`. 
+- **Return:** `None`
+
+**Despot_Ensemble(smdFile)**: Generating cell-type-specific domains.
+
+- **smdFile** (str/os.Path), Path to the SMD File.
+- **Return:** `None`
+
+### SMD Format
+
+#### In Python Environment
+
+**Load_smd_to_AnnData(smdFile, h5data, hires, loadDeconv, loadReduction, loadImg, platform, dtype)** Loading `spMatrix` in SMD File to AnnData in Python environment.
+
+- **smdFile** (Union[str, List[str]]), Path or path list to the SMD File.
+- **h5data** (str, default: `matrix`), `spMatrix` to load for AnnData.
+-  **hires** (bool, default: `False`), Whether loading high-resolution image to AnnData.
+- **loadDeconv** (bool, default: `False`), Whether to load cell-type proportion candidates to AnnData.
+- **loadReduction** (bool, default: `False`), Whether to load integrated reductions to AnnData.
+- **loadImg** (bool, default: `True`), Whether loading image to AnnData.
+- **platform** (str, default: `10X Visium`), The SRT sequencing platform.
+- **dtype** (str, default: `"float32"`), Data type of `spMatrix`.
+- **Return:** `ad.AnnData`
+
+**Load_smdsc_to_AnnData (smdFile, h5data)** Loading `scMatrix` in SMD File to AnnData in Python environment.
+
+- **smdFile** (Union[str, List[str]]), Path or path list to the SMD File.
+- **h5data** (str, default: `scRNA_seq`), `scMatrix` to load for AnnData. Options:`['scRNA_seq', 'scRNA_seq-es', 'scRNA_seq-vae']`
+- **Return:** `ad.AnnData`
+
+**Load_smd_to_stData** Loading `spMatrix` in SMD File to stData in Python environment. (Parameters are  same as **Load_smd_to_AnnData**)
+
+#### In R Environment
+
+**Load_smd_to_Seurat <- function (smdFile, platform, h5data)** 
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **platform** (characters, default: `10X Visium`), The SRT sequencing platform. Options: `['10X_Visium', 'ST', 'Stereo-seq', 'MERFISH', 'Slide-seq', 'osmFISH']`
+- **h5data** (characters, default: `matrix`), `spMatrix` to load for `SeuratObject`.  Options:`['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `SeuratObject`
+
+**Load_smd_to_SCE <- function (smdFile, platform, h5data)** 
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **platform** (characters, default: `10X Visium`), The SRT sequencing platform. Options: `['10X_Visium', 'ST', 'Stereo-seq', 'MERFISH', 'Slide-seq', 'osmFISH']`
+- **h5data** (characters, default: `matrix`), `spMatrix` to load for `SingleCellExperiment`. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `SingleCellExperiment`
+
+**Load_smd_to_SE <- function (smdFile, platform, h5data)** 
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **platform** (characters, default: `10X Visium`), The SRT sequencing platform. Options: `['10X_Visium', 'ST', 'Stereo-seq', 'MERFISH', 'Slide-seq', 'osmFISH']`
+- **h5data** (characters, default: `matrix`), `spMatrix` to load for `SpatialExperiment`. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `SpatialExperiment`
+
+**Load_smd_to_Giotto <- function (smdFile, platform, h5data)** 
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **platform** (characters, default: `10X Visium`), The SRT sequencing platform. Options: `['10X_Visium', 'ST', 'Stereo-seq', 'MERFISH', 'Slide-seq', 'osmFISH']`
+- **h5data** (characters, default: `matrix`), `spMatrix` to load for `GiottoObject`. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `GiottoObject`
+
+**Save_smd_from_Idents <- function (smdFile, arr, title, h5data = 'matrix')**
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **arr** (characters[]), 1D-array idents to save in the SMD File.
+- **title** (characters), Title of idents to save in the SMD File.
+- **h5data** (characters, default: `matrix`), `spMatrix` to save. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `None`
+
+**Save_smd_from_Deconv <- function (smdFile, deMatrix, title, h5data = 'matrix')**
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **deMatrix** (matrix/unpackedMatrix), 2D-array deconvolution matrix to save in the SMD File.
+- **title** (characters), Title of deconv to save in the SMD File.
+- **h5data** (characters, default: `matrix`), `spMatrix` to save. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `None`
+
+**Save_smd_from_Reduct <- function (smdFile, reduct, title, h5data = 'matrix')**
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **deMatrix** (matrix/unpackedMatrix), 2D-array reduction matrix to save in the SMD File.
+- **title** (characters), Title of reduction to save in the SMD File.
+- **h5data** (characters, default: `matrix`), `spMatrix` to save. Options: `['matrix', 'SPCS_mat', 'SpotClean_mat', 'SPROD_mat']`
+- **Return:** `None`
+
+**Save_smd_from_spMat <- function (smdFile, spMat, title)**
+
+- **smdFile** (characters), Path, or path list to the SMD File.
+- **spMat** (matrix/dgCMatrix), 2D denoised/preprocessed expression matrix to save in the SMD File.
+- **title** (characters), Title of spMat to save in the SMD File.
+- **Return:** `None`
+
+### 3D Landscape
+
+**in utils/geo.py:**
+
+**Show_3D_landscape(smdFile, folder, cell_types, sf, pipline=None, imgPath=None,  alpha=100,  save=True,  plot_edge=True,  name="landscape.png",  legend=True)**
+
+- **smdFile** (Union[str, List[str]]), Path, or path list to the SMD File.
+- **folder** (str/os.Path, default: os.getcwd()), Folder to save 3DLandscape images.
+- **cell_types** (Union[str, List[str], None]), List of cell types to display in 3DLandscape. If it is `None`, all cell types will be displayed.
+- **pipline** (Union[str, None] default: `None`), Show 3DLandscape for other pipelines. Options: `['Seurat', 'Giotto', 'CARD']`.If it is `None`, 3DLandscape for Despot will be displayed.
+- **imgPath** (Union[str, None], default: `None`), Path to Slice image. If it is `None`, image in SMD File will be loaded. 3DLandscape sets the largest domain to the bottom layer and hides the contour lines if no images are in the SMD file.
+- **alpha** (int, default: 100), Alpha params for drawing contour lines. The greater the value of Alpha, the more distinct or pronounced the contour lines become.
+- **save** (bool, default: `True`), Whether to save image.
+- **plot_edge** (bool, default: `True`), Whether to plot contour lines in the slice image.
+- **name** (str, default: `'landscape.png'`), Name of 3DLandscape images. The DPI is set to 300 for `PNG`, and `JPEG` files. 
+- **legend** (bool, default: `True`), Whether to show legends.
+
+### Tutorials
+
+For config settings and API usages, see more details in a demo: `./expr/PDAC/PDAC-A.ipynb`.

@@ -10,7 +10,8 @@ def stereoscope_install():
     if "stereoscope" not in {pkg.key for pkg in pkg_resources.working_set}:
         print("Dependencies will be installed when Using stereoscope for the first time.")
         # install stereoscope
-        download = os.system("git clone https://github.com/almaan/stereoscope \n"
+        py_req = Check_Requirements({"Cython"})
+        download = os.system("wget https://github.com/almaan/stereoscope/archive/v_03.tar.gz \n"
                   "{0} stereoscope/setup.py install --user".format(sys.executable))
 
         if download == 0:
