@@ -84,7 +84,7 @@ Conventional spatial domains are expected to have high intra-cluster similarity 
 
 $$\mathcal{D}_{cts}=\{(c_i,D_i )|i∈\{1,2,…,m\},c_i∈C,D_i⊆S\}$$
 
-Cell-type-specific domains in $\mathcal{D}_{cts}$ have two properties: (1) they allow existing $i≠j∈{1,2,…,m}$ such that $D_i∩D_j≠∅$ and (2) $\cup_{(i=1)}^mD_i ⊆S$. It means that a spot may belong to one or multiple cell-type-specific domains, meanwhile some spots are not encompassed by any cell-type-specific domains. For the detection of cell-type-specific domain tuple $(c_i,D_i )∈\mathcal{D}_{cts}$ , let $M$ denote the difference in the proportion of $c_i$ between $D_i$ and other domains.
+Cell-type-specific domains in $\mathcal{D}_{cts}$ have two properties: (1) they allow existing $i≠j∈\{1,2,…,m\}$ such that $D_i∩D_j≠∅$ and (2) $\cup_{(i=1)}^mD_i ⊆S$. It means that a spot may belong to one or multiple cell-type-specific domains, meanwhile some spots are not encompassed by any cell-type-specific domains. For the detection of cell-type-specific domain tuple $(c_i,D_i )∈\mathcal{D}_{cts}$ , let $M$ denote the difference in the proportion of $c_i$ between $D_i$ and other domains.
 
 $$M=\frac{\sum_{s∈D_i}P(s,c_i )}{|D_i|} -\frac{\sum_{s∈S\setminus D_i}P(s,c_i )}{|S|-|D_i |},0<|D_i |<|S|$$
 
