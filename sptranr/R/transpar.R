@@ -3,6 +3,7 @@ library(Matrix)
 library(png)
 library(rjson)
 library(data.table)
+library(jsonlite)
 
 # make gene names or cell names unique
 Make_unique <- function(arr){
@@ -176,7 +177,7 @@ Save_10X_to_smd <- function(dir, smdFile, filtered.matrix = T, name = "",
   library(Seurat)
   imgdir <- paste0(dir, "/spatial")
   # read in lowres, scalefactors, positions
-  sf <- fromJSON(file = paste0(imgdir, "/scalefactors_json.json"))
+  sf <- fromJSON(paste0(imgdir, "/scalefactors_json.json"))
   if(save.hires){
     loc <- H5Fopen(smdFile)
     if(H5Lexists(loc, "sptimages/hires")){
